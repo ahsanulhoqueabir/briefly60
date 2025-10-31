@@ -1,0 +1,12 @@
+{
+  "chat.mcp.serverSampling": {
+    "jnucsu/.vscode/mcp.json: directus": {
+      "allowedModels": [
+        "copilot/gpt-4.1",
+        "copilot/auto",
+        "copilot/claude-sonnet-4"
+      ]
+    }
+  },
+  "json.validate.enable": false
+}

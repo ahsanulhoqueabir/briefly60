@@ -1,0 +1,394 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import {
+  Bell,
+  Eye,
+  Palette,
+  Globe,
+  Shield,
+  Save,
+  ArrowLeft,
+} from "lucide-react";
+import { NEWS_CATEGORIES } from "@/lib/constants";
+import { UserPreferences } from "@/types";
+import { cn } from "@/lib/utils";
+import SettingSection from "@/components/SettingSection";
+
+const SettingsPage = () => {
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    preferred_categories: ["politics", "technology"],
+    language: "en",
+    notification_settings: {
+      email: true,
+      push: false,
+      trending_news: true,
+      breaking_news: true,
+    },
+    reading_preferences: {
+      font_size: "medium",
+      dark_mode: false,
+      autoplay_videos: false,
+    },
+  });
+
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // TODO: Implement actual save logic
+    console.log("Saving preferences:", preferences);
+    setIsLoading(false);
+  };
+
+  const updatePreferences = (
+    section: keyof UserPreferences,
+    key: string,
+    value: boolean | string
+  ) => {
+    setPreferences((prev) => ({
+      ...prev,
+      [section]: {
+        ...(prev[section] as Record<string, boolean | string>),
+        [key]: value,
+      },
+    }));
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setPreferences((prev) => ({
+      ...prev,
+      preferred_categories: prev.preferred_categories.includes(categoryId)
+        ? prev.preferred_categories.filter((id) => id !== categoryId)
+        : [...prev.preferred_categories, categoryId],
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center mb-2">
+            <Link href="/" className="text-blue-600 hover:text-blue-700 mr-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          </div>
+          <p className="text-gray-600">Customize your Briefly60 experience</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Categories */}
+          <SettingSection
+            id="categories"
+            title="Preferred Categories"
+            description="Choose the news categories you're most interested in"
+            icon={Globe}
+            isActive={activeSection === "categories"}
+            onToggle={setActiveSection}
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Select the categories you want to see more often in your feed:
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {NEWS_CATEGORIES.map((category) => {
+                  const isSelected = preferences.preferred_categories.includes(
+                    category.id
+                  );
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => toggleCategory(category.id)}
+                      className={cn(
+                        "p-3 rounded-lg border text-left transition-all",
+                        isSelected
+                          ? "border-blue-300 bg-blue-50 text-blue-700"
+                          : "border-gray-200 bg-white hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="font-medium text-sm">{category.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {category.name_bn}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </SettingSection>
+
+          {/* Notifications */}
+          <SettingSection
+            id="notifications"
+            title="Notification Preferences"
+            description="Control how and when you receive notifications"
+            icon={Bell}
+            isActive={activeSection === "notifications"}
+            onToggle={setActiveSection}
+          >
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Notification Channels
+                </h4>
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      Email notifications
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.notification_settings.email}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "notification_settings",
+                          "email",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      Push notifications
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.notification_settings.push}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "notification_settings",
+                          "push",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Content Preferences
+                </h4>
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      Trending news alerts
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.notification_settings.trending_news}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "notification_settings",
+                          "trending_news",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      Breaking news alerts
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.notification_settings.breaking_news}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "notification_settings",
+                          "breaking_news",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </SettingSection>
+
+          {/* Reading Preferences */}
+          <SettingSection
+            id="reading"
+            title="Reading Experience"
+            description="Customize how articles are displayed"
+            icon={Eye}
+            isActive={activeSection === "reading"}
+            onToggle={setActiveSection}
+          >
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Text Size</h4>
+                <div className="flex space-x-3">
+                  {(["small", "medium", "large"] as const).map((size) => (
+                    <button
+                      key={size}
+                      onClick={() =>
+                        updatePreferences(
+                          "reading_preferences",
+                          "font_size",
+                          size
+                        )
+                      }
+                      className={cn(
+                        "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                        preferences.reading_preferences.font_size === size
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      )}
+                    >
+                      {size.charAt(0).toUpperCase() + size.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Display Options
+                </h4>
+                <div className="space-y-3">
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">Dark mode</span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.reading_preferences.dark_mode}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "reading_preferences",
+                          "dark_mode",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      Autoplay videos
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={preferences.reading_preferences.autoplay_videos}
+                      onChange={(e) =>
+                        updatePreferences(
+                          "reading_preferences",
+                          "autoplay_videos",
+                          e.target.checked
+                        )
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </SettingSection>
+
+          {/* Language */}
+          <SettingSection
+            id="language"
+            title="Language & Region"
+            description="Set your preferred language and regional settings"
+            icon={Palette}
+            isActive={activeSection === "language"}
+            onToggle={setActiveSection}
+          >
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Interface Language
+                </h4>
+                <select
+                  value={preferences.language}
+                  onChange={(e) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      language: e.target.value as "en" | "bn",
+                    }))
+                  }
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="en">English</option>
+                  <option value="bn">বাংলা (Bengali)</option>
+                </select>
+              </div>
+            </div>
+          </SettingSection>
+
+          {/* Account */}
+          <SettingSection
+            id="account"
+            title="Account & Privacy"
+            description="Manage your account settings and privacy preferences"
+            icon={Shield}
+            isActive={activeSection === "account"}
+            onToggle={setActiveSection}
+          >
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/profile"
+                  className="flex-1 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <h5 className="font-medium text-gray-900">
+                    Profile Information
+                  </h5>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Update your name, email, and avatar
+                  </p>
+                </Link>
+                <Link
+                  href="/privacy"
+                  className="flex-1 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <h5 className="font-medium text-gray-900">
+                    Privacy Settings
+                  </h5>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Control your data and privacy
+                  </p>
+                </Link>
+              </div>
+            </div>
+          </SettingSection>
+        </div>
+
+        {/* Save Button */}
+        {!activeSection && (
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={isLoading}
+              className={cn(
+                "flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors",
+                isLoading && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save Preferences
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;
