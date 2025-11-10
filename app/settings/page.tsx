@@ -10,13 +10,18 @@ import {
   Shield,
   Save,
   ArrowLeft,
+  Moon,
+  Sun,
+  Monitor,
 } from "lucide-react";
 import { NEWS_CATEGORIES } from "@/lib/constants";
 import { UserPreferences } from "@/types";
 import { cn } from "@/lib/utils";
 import SettingSection from "@/components/SettingSection";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const SettingsPage = () => {
+  const { theme, setTheme } = useTheme();
   const [preferences, setPreferences] = useState<UserPreferences>({
     preferred_categories: ["politics", "technology"],
     language: "en",
@@ -28,7 +33,6 @@ const SettingsPage = () => {
     },
     reading_preferences: {
       font_size: "medium",
-      dark_mode: false,
       autoplay_videos: false,
     },
   });
@@ -256,27 +260,60 @@ const SettingsPage = () => {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">
+                <h4 className="font-medium text-foreground mb-3">
                   Display Options
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground mb-3 block">
+                      Theme
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={cn(
+                          "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
+                          theme === "light"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/50 text-muted-foreground"
+                        )}
+                      >
+                        <Sun className="w-5 h-5 mr-2" />
+                        <span className="text-sm font-medium">Light</span>
+                      </button>
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={cn(
+                          "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
+                          theme === "dark"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/50 text-muted-foreground"
+                        )}
+                      >
+                        <Moon className="w-5 h-5 mr-2" />
+                        <span className="text-sm font-medium">Dark</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const systemTheme = window.matchMedia(
+                            "(prefers-color-scheme: dark)"
+                          ).matches
+                            ? "dark"
+                            : "light";
+                          setTheme(systemTheme);
+                        }}
+                        className={cn(
+                          "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
+                          "border-border hover:border-primary/50 text-muted-foreground"
+                        )}
+                      >
+                        <Monitor className="w-5 h-5 mr-2" />
+                        <span className="text-sm font-medium">System</span>
+                      </button>
+                    </div>
+                  </div>
                   <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">Dark mode</span>
-                    <input
-                      type="checkbox"
-                      checked={preferences.reading_preferences.dark_mode}
-                      onChange={(e) =>
-                        updatePreferences(
-                          "reading_preferences",
-                          "dark_mode",
-                          e.target.checked
-                        )
-                      }
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                  </label>
-                  <label className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-muted-foreground">
                       Autoplay videos
                     </span>
                     <input

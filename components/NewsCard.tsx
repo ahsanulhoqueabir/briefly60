@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, Tag, TrendingUp, Eye, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { NewsBrief } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
   return (
     <article
       className={cn(
-        "bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200",
+        "bg-card rounded-lg border border-border hover:shadow-md transition-shadow duration-200",
         compact ? "p-4" : "p-6"
       )}
     >
@@ -67,32 +67,31 @@ const NewsCard: React.FC<NewsCardProps> = ({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Category and Time */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xs font-medium text-primary">
               {news.category}
             </span>
-            <div className="flex items-center text-xs text-gray-500">
+            <div className="flex items-center text-xs text-muted-foreground">
               <Clock className="w-3 h-3 mr-1" />
               {formatTimeAgo(news.published_at)}
             </div>
             {news.trending_score && news.trending_score > 80 && (
-              <div className="flex items-center text-xs text-orange-600">
-                <TrendingUp className="w-3 h-3 mr-1" />
+              <span className="text-xs text-secondary font-medium">
                 Trending
-              </div>
+              </span>
             )}
           </div>
 
           {/* Title */}
           <h3
             className={cn(
-              "font-semibold text-gray-900 mb-2 line-clamp-2",
+              "font-semibold text-foreground mb-2 line-clamp-2",
               compact ? "text-sm" : "text-base"
             )}
           >
             <Link
               href={`/news/${news.id}`}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               {news.proper_title}
             </Link>
@@ -101,7 +100,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           {/* Original Title (if different and clickbait indicator enabled) */}
           {showClickbaitIndicator && news.title !== news.proper_title && (
             <div className="mb-2">
-              <p className="text-xs text-gray-500 italic line-clamp-1">
+              <p className="text-xs text-muted-foreground italic line-clamp-1">
                 Original: &ldquo;{news.title}&rdquo;
               </p>
             </div>
@@ -110,7 +109,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           {/* Content */}
           <p
             className={cn(
-              "text-gray-700 mb-3 line-clamp-3",
+              "text-muted-foreground mb-3 line-clamp-3",
               compact ? "text-sm" : "text-sm"
             )}
           >
@@ -119,34 +118,21 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
           {/* Footer */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Source */}
-              <span className="text-xs text-gray-500">{news.source}</span>
-
-              {/* Tags */}
-              {news.tags.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Tag className="w-3 h-3 text-gray-400" />
-                  <span className="text-xs text-gray-500">
-                    {news.tags.slice(0, 2).join(", ")}
-                    {news.tags.length > 2 && "..."}
-                  </span>
-                </div>
-              )}
-            </div>
+            <span className="text-xs text-muted-foreground font-medium">
+              {news.source}
+            </span>
 
             {/* Clickbait Indicator */}
             {showClickbaitIndicator && (
               <div
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+                  "flex items-center gap-1 px-2 py-1 rounded text-xs",
                   getClickbaitColor(news.clickbait_value)
                 )}
               >
                 {news.clickbait_value < 0.5 && (
                   <AlertTriangle className="w-3 h-3" />
                 )}
-                <Eye className="w-3 h-3" />
                 <span>{getClickbaitLabel(news.clickbait_value)}</span>
               </div>
             )}

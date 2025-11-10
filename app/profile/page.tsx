@@ -1,0 +1,152 @@
+"use client";
+
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserIcon, Mail, Calendar } from "lucide-react";
+import Image from "next/image";
+
+const ProfilePage: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-2">
+            Authentication Required
+          </h1>
+          <p className="text-muted-foreground">
+            Please log in to access your profile.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+        <p className="text-muted-foreground mt-2">
+          View and manage your account information.
+        </p>
+      </div>
+
+      <div className="grid gap-6">
+        {/* Profile Information Card */}
+        <div className="bg-card border border-border rounded-lg p-6">
+          <div className="flex items-center space-x-4 mb-6">
+            {user.avatar_url ? (
+              <Image
+                src={user.avatar_url}
+                alt={user.name}
+                width={64}
+                height={64}
+                className="w-16 h-16 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-medium">
+                {getUserInitials(user.name)}
+              </div>
+            )}
+            <div>
+              <h2 className="text-2xl font-semibold">{user.name}</h2>
+              <p className="text-muted-foreground">Welcome to Briefly60!</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="flex items-center space-x-3">
+              <UserIcon className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Full Name</p>
+                <p className="text-muted-foreground">{user.name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Mail className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Email Address</p>
+                <p className="text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Account Type</p>
+                <p className="text-muted-foreground">
+                  {user.subscription || "Free Account"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Statistics */}
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Account Statistics</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-white">
+            <div className="text-center p-4 bg-accent rounded-lg">
+              <p className="text-2xl font-bold ">0</p>
+              <p className="text-sm ">Articles Read</p>
+            </div>
+            <div className="text-center p-4 bg-accent rounded-lg">
+              <p className="text-2xl font-bold ">0</p>
+              <p className="text-sm ">Bookmarks</p>
+            </div>
+            <div className="text-center p-4 bg-accent rounded-lg">
+              <p className="text-2xl font-bold ">0</p>
+              <p className="text-sm ">Shares</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Provider Information */}
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Account Details</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-medium">Sign-in Method</p>
+              <p className="text-muted-foreground capitalize">
+                {user.provider === "google"
+                  ? "Google Account"
+                  : "Email & Password"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Email Verified</p>
+              <p className="text-muted-foreground">
+                {user.email_verified ? "Verified ✓" : "Not Verified"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Account Status</p>
+              <p className="text-muted-foreground">Active</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;

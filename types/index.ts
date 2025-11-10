@@ -13,6 +13,15 @@ export interface NewsBrief {
   trending_score?: number;
 }
 
+// Theme Types
+export type Theme = "light" | "dark";
+
+export interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -34,7 +43,6 @@ export interface UserPreferences {
   };
   reading_preferences: {
     font_size: "small" | "medium" | "large";
-    dark_mode: boolean;
     autoplay_videos: boolean;
   };
 }

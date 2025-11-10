@@ -27,10 +27,9 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   return (
     <div
       className={cn(
-        "grid gap-3",
         compact
-          ? "grid-cols-2 sm:grid-cols-4 lg:grid-cols-6"
-          : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"
+          ? "flex overflow-x-auto gap-2 pb-2 md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          : "grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3"
       )}
     >
       {categories.map((category) => {
@@ -42,39 +41,52 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
             key={category.id}
             href={`/categories/${category.id}`}
             className={cn(
-              "group flex flex-col items-center p-4 rounded-xl border transition-all duration-200",
-              "hover:shadow-md hover:scale-105 hover:border-blue-300",
+              "group relative flex flex-col items-center rounded-lg border transition-all duration-300",
+              "hover:shadow-lg hover:scale-105 hover:border-primary/30 hover:bg-primary/5",
               isSelected
-                ? "bg-blue-50 border-blue-300 shadow-md"
-                : "bg-white border-gray-200 hover:bg-gray-50",
-              compact && "p-3"
+                ? "bg-primary/10 border-primary/50 shadow-md"
+                : "bg-card border-border hover:bg-primary/5",
+              compact
+                ? "p-2 shrink-0 w-12 h-12 md:w-auto md:h-auto md:p-3"
+                : "p-3"
             )}
           >
             <div
               className={cn(
-                "flex items-center justify-center rounded-lg mb-2 text-white transition-transform duration-200 group-hover:scale-110",
+                "flex items-center justify-center rounded-lg text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
                 category.color,
-                compact ? "w-8 h-8" : "w-12 h-12"
+                compact ? "w-8 h-8 md:w-10 md:h-10 md:mb-2" : "w-10 h-10 mb-2"
               )}
             >
-              <Icon className={cn(compact ? "w-4 h-4" : "w-6 h-6")} />
+              <Icon
+                className={cn(compact ? "w-4 h-4 md:w-5 md:h-5" : "w-5 h-5")}
+              />
             </div>
+
+            {/* Category Name - Hidden on mobile for compact, visible on larger screens */}
             <h3
               className={cn(
-                "font-medium text-center text-gray-900 group-hover:text-blue-600 transition-colors",
-                compact ? "text-xs" : "text-sm"
+                "font-medium text-center transition-all duration-300",
+                compact
+                  ? "hidden md:block text-xs text-foreground group-hover:text-primary"
+                  : "text-xs text-foreground group-hover:text-primary"
               )}
             >
               {category.name}
             </h3>
-            <p
-              className={cn(
-                "text-xs text-gray-500 text-center mt-1",
-                compact ? "text-xs" : "text-xs"
-              )}
-            >
-              {category.name_bn}
-            </p>
+
+            {/* Bengali Name - Only show on larger screens for compact mode */}
+            {!compact && (
+              <p className="text-xs text-muted-foreground text-center mt-1 group-hover:text-primary/70 transition-colors">
+                {category.name_bn}
+              </p>
+            )}
+
+            {compact && (
+              <p className="hidden md:block text-xs text-muted-foreground text-center mt-1 group-hover:text-primary/70 transition-colors">
+                {category.name_bn}
+              </p>
+            )}
           </Link>
         );
       })}

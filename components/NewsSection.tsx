@@ -29,11 +29,11 @@ const NewsSection: React.FC<NewsSectionProps> = ({
     return (
       <section className="mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         </div>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Loading news...</span>
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading news...</span>
         </div>
       </section>
     );
@@ -43,10 +43,12 @@ const NewsSection: React.FC<NewsSectionProps> = ({
     return (
       <section className="mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         </div>
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No news available at the moment.</p>
+        <div className="text-center py-12 bg-muted rounded-lg">
+          <p className="text-muted-foreground">
+            No news available at the moment.
+          </p>
         </div>
       </section>
     );
@@ -56,11 +58,11 @@ const NewsSection: React.FC<NewsSectionProps> = ({
     <section className="mb-8">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         {showViewMore && (
           <Link
             href={viewMoreHref}
-            className="flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
           >
             View All
             <ChevronRight className="w-4 h-4 ml-1" />
