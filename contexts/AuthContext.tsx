@@ -1,10 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/config/firebase";
-import { firebaseAuthService } from "@/services/auth/firebase";
-import { AuthContextType, AuthState } from "@/types/auth";
+import {
+  AuthContextType,
+  AuthState,
+  LoginPayload,
+  SignUpPayload,
+} from "@/types/auth.types";
+import { LocalStorageService } from "@/services/localstorage.services";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -24,97 +27,138 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     loading: true,
-    error: null,
+    error: {},
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (firebaseUser: User | null) => {
-        if (firebaseUser) {
-          try {
-            // Sync with Directus and get user data
-            const user = await firebaseAuthService.syncUserWithDirectus(
-              firebaseUser
-            );
+    // Check if user is logged in from localStorage
+    const checkAuth = async () => {
+      const token = LocalStorageService.getAuthToken();
+
+      if (token) {
+        try {
+          const data = await fetch("/api/auth/me", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((res) => res.json());
+
+          if (data.success && data.user) {
             setAuthState({
-              user,
+              user: data.user,
               loading: false,
-              error: null,
+              error: {},
             });
-          } catch (error) {
-            console.error("Error syncing user:", error);
+            setIsAuthenticated(true);
+          } else {
+            LocalStorageService.removeAuthToken();
             setAuthState({
               user: null,
               loading: false,
-              error: "Failed to sync user data",
+              error: {},
             });
           }
-        } else {
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          LocalStorageService.removeAuthToken();
           setAuthState({
             user: null,
             loading: false,
-            error: null,
+            error: {},
           });
         }
+      } else {
+        setAuthState({
+          user: null,
+          loading: false,
+          error: {},
+        });
       }
-    );
+    };
 
-    return () => unsubscribe();
+    checkAuth();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithEmail = async (data: LoginPayload) => {
     try {
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
+      setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
 
-      // This will trigger the onAuthStateChanged listener
-      await firebaseAuthService.signInWithGoogle();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Google sign-in failed";
-      setAuthState((prev) => ({
-        ...prev,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Login failed");
+      }
+
+      LocalStorageService.setAuthToken(result.token);
+      setAuthState({
+        user: result.user,
         loading: false,
-        error: message,
-      }));
-      throw error;
-    }
-  };
-
-  const signInWithEmail = async (email: string, password: string) => {
-    try {
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      // This will trigger the onAuthStateChanged listener
-      await firebaseAuthService.signInWithEmail(email, password);
+        error: {},
+      });
+      setIsAuthenticated(true);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Email sign-in failed";
       setAuthState((prev) => ({
         ...prev,
         loading: false,
-        error: message,
+        error: {
+          details: message,
+        },
       }));
       throw error;
     }
   };
 
-  const signUpWithEmail = async (
-    name: string,
-    email: string,
-    password: string
-  ) => {
+  const signUpWithEmail = async (data: SignUpPayload) => {
     try {
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
+      setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
 
-      // This will trigger the onAuthStateChanged listener
-      await firebaseAuthService.signUpWithEmail(name, email, password);
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          first_name: data.first_name,
+          email: data.email,
+          password: data.password,
+          confirm_password: data.confirm_password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Sign-up failed");
+      }
+
+      LocalStorageService.setAuthToken(result.token);
+
+      setAuthState({
+        user: result.user,
+        loading: false,
+        error: {},
+      });
+      setIsAuthenticated(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign-up failed";
       setAuthState((prev) => ({
         ...prev,
         loading: false,
-        error: message,
+        error: {
+          details: message,
+        },
       }));
       throw error;
     }
@@ -122,33 +166,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
+      setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
 
-      await firebaseAuthService.signOut();
-      // onAuthStateChanged will handle the state update
+      LocalStorageService.removeAuthToken();
+
+      setAuthState({
+        user: null,
+        loading: false,
+        error: {},
+      });
+      setIsAuthenticated(false);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Sign-out failed";
       setAuthState((prev) => ({
         ...prev,
         loading: false,
-        error: message,
+        error: {
+          details: message,
+        },
       }));
       throw error;
     }
   };
 
   const clearError = () => {
-    setAuthState((prev) => ({ ...prev, error: null }));
+    setAuthState((prev) => ({ ...prev, error: {} }));
   };
 
   const contextValue: AuthContextType = {
     ...authState,
-    signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     signOut,
     clearError,
+    isAuthenticated,
   };
 
   return (

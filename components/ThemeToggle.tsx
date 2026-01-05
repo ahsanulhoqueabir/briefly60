@@ -34,7 +34,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
       className={cn(
         buttonSizes[size],
         "text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent",
-        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "focus:outline-none ",
         className
       )}
       aria-label={

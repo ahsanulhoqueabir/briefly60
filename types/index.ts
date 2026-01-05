@@ -22,16 +22,6 @@ export interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
-// User Types
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar_url?: string;
-  preferences: UserPreferences;
-  created_at: Date;
-}
-
 export interface UserPreferences {
   preferred_categories: string[];
   language: "en" | "bn";
@@ -55,25 +45,6 @@ export interface Category {
   icon: string;
   color: string;
   description?: string;
-}
-
-// Auth Types
-export interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-  confirm_password: string;
 }
 
 // Component Props Types

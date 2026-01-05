@@ -2,7 +2,7 @@
   "servers": {
     "directus": {
       "type": "http",
-      "url": "http://admin.ahsanul.me/mcp",
+      "url": "http://i8wkk8wwss0wowwgg88goock.72.61.248.208.sslip.io/mcp",
       "headers": {
         "Authorization": "Bearer ${input:directus-token}"
       }

@@ -1,106 +1,95 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { NewsBrief } from "@/types";
-import { NEWS_CATEGORIES, MOCK_NEWS } from "@/lib/constants";
-import NewsSection from "@/components/NewsSection";
-import CategoryGrid from "@/components/CategoryGrid";
-import FeaturedNews from "@/components/FeaturedNews";
-import { Grid3x3 } from "lucide-react";
+import ArticleCard from "@/components/ArticleCard";
+import QuizModal from "@/components/QuizModal";
+import Headlines from "@/components/ui/headlines";
+import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
+import { Article } from "@/types/news.types";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
-const HomePage = () => {
-  const [latestNews, setLatestNews] = useState<NewsBrief[]>([]);
-  const [trendingNews, setTrendingNews] = useState<NewsBrief[]>([]);
-  const [featuredNews, setFeaturedNews] = useState<NewsBrief[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function HomePage() {
+  const { articles, loading, error, hasMore, observerRef } =
+    useInfiniteArticles();
+  const [quizModalState, setQuizModalState] = useState<{
+    isOpen: boolean;
+    article: Article | null;
+  }>({
+    isOpen: false,
+    article: null,
+  });
 
-  useEffect(() => {
-    // Simulate API call
-    const fetchNews = async () => {
-      setLoading(true);
+  const handleQuizClick = (article: Article) => {
+    setQuizModalState({ isOpen: true, article });
+  };
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Sort and filter mock data
-      const sortedByDate = [...MOCK_NEWS].sort(
-        (a, b) =>
-          new Date(b.published_at).getTime() -
-          new Date(a.published_at).getTime()
-      );
-
-      const sortedByTrending = [...MOCK_NEWS]
-        .filter((news) => news.trending_score && news.trending_score > 70)
-        .sort((a, b) => (b.trending_score || 0) - (a.trending_score || 0));
-
-      // Create featured news (admin controlled - mock selection of high-quality articles)
-      const featuredArticles = [...MOCK_NEWS]
-        .filter(
-          (news) =>
-            news.clickbait_value >= 0.7 && // High reliability
-            news.trending_score &&
-            news.trending_score > 60 // Good engagement
-        )
-        .sort((a, b) => (b.trending_score || 0) - (a.trending_score || 0))
-        .slice(0, 4); // Take top 4 for featured
-
-      setLatestNews(sortedByDate.slice(0, 5));
-      setTrendingNews(sortedByTrending.slice(0, 4));
-      setFeaturedNews(featuredArticles);
-      setLoading(false);
-    };
-
-    fetchNews();
-  }, []);
+  const handleQuizClose = () => {
+    setQuizModalState({ isOpen: false, article: null });
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content Area */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
-            {/* Featured News */}
-            <FeaturedNews news={featuredNews} loading={loading} />
-
-            {/* Latest News */}
-            <NewsSection
-              title="Latest News"
-              news={latestNews}
-              loading={loading}
-              showViewMore={!loading && latestNews.length > 0}
-              viewMoreHref="/latest"
-              showClickbaitIndicator={true}
-            />
-
-            {/* Trending News */}
-            <NewsSection
-              title="Trending Now"
-              news={trendingNews}
-              loading={loading}
-              showViewMore={!loading && trendingNews.length > 0}
-              viewMoreHref="/trending"
-              showClickbaitIndicator={true}
-            />
+    <main className=" bg-background">
+      {/* News Ticker at the top */}
+      <Headlines articles={articles} />
+      <div className="container mx-auto px-4 py-2">
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <p className="font-medium">Error: {error}</p>
           </div>
+        )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
-            {/* Categories Section */}
-            <div className="hidden lg:block bg-card rounded-lg border border-border p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <Grid3x3 className="w-5 h-5 text-primary mr-2" />
-                <h2 className="text-lg font-semibold text-foreground">
-                  Categories
-                </h2>
-              </div>
-              <CategoryGrid categories={NEWS_CATEGORIES} compact={false} />
-            </div>
-          </div>
+        {/* Articles Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map((article) => (
+            <ArticleCard
+              key={article.id}
+              article={article}
+              onQuizClick={() => handleQuizClick(article)}
+            />
+          ))}
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default HomePage;
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Infinite Scroll Trigger */}
+        {hasMore && !loading && (
+          <div
+            ref={observerRef}
+            className="h-10 flex items-center justify-center"
+          >
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* No More Content */}
+        {!hasMore && articles.length > 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">আর কোনো সংবাদ নেই</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && articles.length === 0 && !error && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">কোনো সংবাদ পাওয়া যায়নি</p>
+          </div>
+        )}
+      </div>
+
+      {/* Quiz Modal */}
+      {quizModalState.article && (
+        <QuizModal
+          isOpen={quizModalState.isOpen}
+          onClose={handleQuizClose}
+          mcqs={quizModalState.article.mcqs || []}
+        />
+      )}
+    </main>
+  );
+}

@@ -1,8 +1,14 @@
 export const directus = {
   url: process.env.DIRECTUS_URL!,
-  staticToken: process.env.DIRECTUS_STATIC_TOKEN!,
+  token: process.env.DIRECTUS_STATIC_TOKEN!,
+  generalRoleId: process.env.DIRECTUS_GENERAL_ROLE_ID!,
 };
 
 export const placeholderImage =
   process.env.NEXT_PUBLIC_PLACEHOLDER_IMAGE ||
   "https://placehold.co/600x400/1d777b/cf4040";
+
+export const jwtSecret = {
+  secret: process.env.JWT_SECRET!,
+  expiresIn: process.env.JWT_EXPIRES_IN || "2592000",
+};

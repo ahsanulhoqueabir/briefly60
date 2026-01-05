@@ -30,11 +30,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       : "light";
     const initialTheme = savedTheme || systemTheme;
 
-    // Use setTimeout to avoid the cascading render issue
-    setTimeout(() => {
-      setThemeState(initialTheme);
-      setMounted(true);
-    }, 0);
+    setThemeState(initialTheme);
+    setMounted(true);
   }, []);
 
   // Listen for system theme changes

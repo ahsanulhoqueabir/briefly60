@@ -31,13 +31,10 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const getUserInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getUserInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    const initial = name.charAt(0).toUpperCase();
+    return initial || "U";
   };
 
   return (
@@ -53,21 +50,21 @@ const ProfilePage: React.FC = () => {
         {/* Profile Information Card */}
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center space-x-4 mb-6">
-            {user.avatar_url ? (
+            {user.image ? (
               <Image
-                src={user.avatar_url}
-                alt={user.name}
+                src={user.image}
+                alt={user.first_name}
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
               <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-medium">
-                {getUserInitials(user.name)}
+                {getUserInitials(user.first_name)}
               </div>
             )}
             <div>
-              <h2 className="text-2xl font-semibold">{user.name}</h2>
+              <h2 className="text-2xl font-semibold">{user.first_name}</h2>
               <p className="text-muted-foreground">Welcome to Briefly60!</p>
             </div>
           </div>
@@ -76,8 +73,8 @@ const ProfilePage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <UserIcon className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Full Name</p>
-                <p className="text-muted-foreground">{user.name}</p>
+                <p className="text-sm font-medium">Name</p>
+                <p className="text-muted-foreground">{user.first_name}</p>
               </div>
             </div>
 
@@ -93,8 +90,8 @@ const ProfilePage: React.FC = () => {
               <Calendar className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Account Type</p>
-                <p className="text-muted-foreground">
-                  {user.subscription || "Free Account"}
+                <p className="text-muted-foreground capitalize">
+                  {user.plan} Account
                 </p>
               </div>
             </div>
@@ -120,22 +117,20 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Provider Information */}
+        {/* Account Information */}
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Account Details</h2>
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium">Sign-in Method</p>
+              <p className="text-sm font-medium">Subscription Plan</p>
               <p className="text-muted-foreground capitalize">
-                {user.provider === "google"
-                  ? "Google Account"
-                  : "Email & Password"}
+                {user.plan} Plan
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium">Email Verified</p>
+              <p className="text-sm font-medium">Active Subscriptions</p>
               <p className="text-muted-foreground">
-                {user.email_verified ? "Verified ✓" : "Not Verified"}
+                {user.subscriptions?.length || 0} subscription(s)
               </p>
             </div>
             <div>
