@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Black_Ops_One, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import MobileBottomNav from "@/components/MobileBottomNav";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import Footer from "@/components/footer";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,12 +66,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <Navbar />
-            <main className={`min-h-[calc(100vh-4rem)] pb-20 md:pb-0`}>
-              {children}
-            </main>
-            <Footer />
-            <MobileBottomNav />
+            <LayoutWrapper>{children}</LayoutWrapper>
           </AuthProvider>
         </ThemeProvider>
       </body>

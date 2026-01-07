@@ -3,19 +3,32 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, User as UserIcon, LogIn } from "lucide-react";
+import {
+  Home,
+  Search,
+  User as UserIcon,
+  LogIn,
+  LayoutDashboard,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const pathname = usePathname();
+
+  // Check if user has dashboard access
+  const hasDashboardAccess =
+    user?.rbac && ["admin", "superadmin", "editor"].includes(user.rbac);
 
   const navItems = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Search", href: "/search", icon: Search },
+    { label: "Search", href: "/discover", icon: Search },
+    ...(hasDashboardAccess
+      ? [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }]
+      : []),
     {
       label: isAuthenticated ? "Profile" : "Login",
       href: isAuthenticated ? "/profile" : "/auth/login",

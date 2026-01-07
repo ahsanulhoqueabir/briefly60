@@ -22,6 +22,15 @@ interface ArticleCardProps {
   onQuizClick: () => void;
 }
 
+const validUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export default function ArticleCard({
   article,
   onQuizClick,
@@ -116,8 +125,8 @@ export default function ArticleCard({
 
     try {
       // Validate URL format
-      new URL(article.banner);
-      return article.banner;
+      if (validUrl(article.banner)) return article.banner;
+      return placeholderImage;
     } catch {
       return placeholderImage;
     }

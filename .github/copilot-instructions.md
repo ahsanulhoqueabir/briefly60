@@ -12,6 +12,10 @@ Always starts with hey Ahsan,
 - Use functional components and React hooks.
 - use variable classes for fonts,colors(dont use hardcoded values) as defined in layout.tsx.
 - Keep the code clean and well-commented.
+- For private api calls use `use-private-axios` hook from `/hooks/use-private-axios.ts`.
+- Use TypeScript for type safety.
+- Make clean and reusable components.
+- Use component from shadcn/ui wherever possible.
 
 ### File-Specific Instructions
 

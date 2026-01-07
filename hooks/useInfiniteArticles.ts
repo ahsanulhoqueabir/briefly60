@@ -88,12 +88,13 @@ export function useInfiniteArticles(
   }, [loading, hasMore, page, initialParams]);
 
   // Reset state when params change
+  const paramsKey = JSON.stringify(initialParams);
   useEffect(() => {
     setArticles([]);
     setPage(1);
     setHasMore(true);
     setError(null);
-  }, [JSON.stringify(initialParams)]);
+  }, [paramsKey]);
 
   // Initial load
   useEffect(() => {

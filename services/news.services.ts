@@ -79,6 +79,11 @@ export class NewsService {
       filter.category = { _eq: params.category };
     }
 
+    // Source filter
+    if (params.source_name) {
+      filter.source_name = { _eq: params.source_name };
+    }
+
     // Date range filters
     if (params.published_after || params.published_before) {
       const publishedAtFilter: DirectusFilterValue = {};
@@ -107,8 +112,18 @@ export class NewsService {
     }
 
     // Clickbait score filter
-    if (params.clickbait_max !== undefined) {
-      filter.clickbait_score = { _lte: params.clickbait_max };
+    if (
+      params.clickbait_min !== undefined ||
+      params.clickbait_max !== undefined
+    ) {
+      const clickbaitFilter: DirectusFilterValue = {};
+      if (params.clickbait_min !== undefined) {
+        clickbaitFilter._gte = params.clickbait_min;
+      }
+      if (params.clickbait_max !== undefined) {
+        clickbaitFilter._lte = params.clickbait_max;
+      }
+      filter.clickbait_score = clickbaitFilter;
     }
 
     // Search in title and content

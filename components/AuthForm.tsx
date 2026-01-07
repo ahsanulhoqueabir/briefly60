@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,8 @@ interface AuthFormProps {
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
-  const { signInWithEmail, signUpWithEmail, loading, error } = useAuth();
+  const { signInWithEmail, signUpWithEmail, loading, error, clearError } =
+    useAuth();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -26,6 +27,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isLogin = mode === "login";
+
+  // Clear any existing auth errors when component mounts
+  useEffect(() => {
+    clearError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -295,11 +302,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
             {/* Submit Button */}
             {/* Error Display */}
-            {error && (
+            {(error?.error || error?.details) && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                {error.error ||
-                  error.details ||
-                  "An error occurred. Please try again."}
+                {error.error || error.details}
               </div>
             )}
 

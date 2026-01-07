@@ -48,6 +48,7 @@ export class AuthService {
           first_name: user.first_name,
           image: user.image,
           plan: user.plan,
+          rbac: user.rbac,
         },
         token,
       };
@@ -62,7 +63,7 @@ export class AuthService {
   static async getUserbyId(userId: string) {
     try {
       const res = await directusApi.get(
-        `/users/${userId}?fields=id,email,first_name,image,plan,subscriptions.*`
+        `/users/${userId}?fields=id,email,first_name,image,plan,subscriptions.*,rbac`
       );
       const user = res.data?.data;
       return {
