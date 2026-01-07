@@ -342,7 +342,10 @@ export default function UsersManagementPage() {
             onValueChange={(value) =>
               setFilters({
                 ...filters,
-                plan: value === "all" ? undefined : (value as "free" | "pro" | "enterprise"),
+                plan:
+                  value === "all"
+                    ? undefined
+                    : (value as "free" | "pro" | "enterprise"),
               })
             }
           >

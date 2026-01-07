@@ -50,7 +50,11 @@ export default function AnalyticsBarChart({
           margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
           onMouseMove={(state) => {
             if (state && state.activeTooltipIndex !== undefined) {
-              setHoveredIndex(typeof state.activeTooltipIndex === 'number' ? state.activeTooltipIndex : null);
+              setHoveredIndex(
+                typeof state.activeTooltipIndex === "number"
+                  ? state.activeTooltipIndex
+                  : null
+              );
             }
           }}
           onMouseLeave={() => setHoveredIndex(null)}
