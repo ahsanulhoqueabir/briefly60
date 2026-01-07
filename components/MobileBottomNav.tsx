@@ -19,7 +19,7 @@ const MobileBottomNav: React.FC = () => {
     },
     {
       label: "Search",
-      href: "/search",
+      href: "/discover",
       icon: Search,
     },
     {

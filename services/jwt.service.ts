@@ -1,7 +1,7 @@
 import { jwtSecret } from "@/config/env";
 import * as jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
-import { JwtVerifyResult } from "@/types/jwt.types";
+import { JwtVerifyResult, UserRole } from "@/types/jwt.types";
 import { User } from "@/types/auth.types";
 
 export class JWTService {
@@ -13,6 +13,7 @@ export class JWTService {
       {
         id: user.id,
         email: user.email,
+        role: user.rbac || "user",
         plan_expires: user.subscriptions
           ? new Date(
               Math.max(
@@ -36,6 +37,7 @@ export class JWTService {
       const decoded = jwt.verify(token, jwtSecret.secret) as JwtPayload & {
         id: string;
         email: string;
+        role: UserRole;
         plan_expires?: Date;
       };
       if (
@@ -54,6 +56,7 @@ export class JWTService {
         user: {
           id: decoded.id,
           email: decoded.email,
+          role: decoded.role || "user",
           plan_expires: decoded.plan_expires,
         },
       };

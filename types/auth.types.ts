@@ -26,6 +26,7 @@ export interface User {
   first_name: string;
   image?: string;
   plan: Plan;
+  rbac?: "superadmin" | "admin" | "editor" | "user";
   subscriptions?: Subscription[];
 }
 

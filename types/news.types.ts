@@ -107,13 +107,15 @@ export interface UpdateArticlePayload
 export interface ArticleFilters {
   status?: ArticleStatus;
   category?: string;
+  source_name?: string;
   published_after?: string;
   published_before?: string;
   importance_min?: number;
   importance_max?: number;
+  clickbait_min?: number;
+  clickbait_max?: number;
   search?: string;
   keywords?: string[];
-  clickbait_max?: number;
 }
 
 /**

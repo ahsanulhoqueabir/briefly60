@@ -1,3 +1,5 @@
+export type UserRole = "superadmin" | "admin" | "editor" | "user";
+
 export interface JwtTokenResponse {
   token: string;
   expiresIn: number;
@@ -8,6 +10,7 @@ export interface JwtVerifyResult {
   user?: {
     id: string;
     email: string;
+    role: UserRole;
     plan_expires?: Date;
   };
   error?: string;
@@ -16,6 +19,7 @@ export interface JwtVerifyResult {
 export interface JwtPayload {
   id: string;
   email: string;
+  role: UserRole;
   plan_expires?: Date;
   iat?: number;
   exp?: number;
