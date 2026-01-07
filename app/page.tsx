@@ -1,31 +1,13 @@
 "use client";
 
 import ArticleCard from "@/components/ArticleCard";
-import QuizModal from "@/components/QuizModal";
 import Headlines from "@/components/ui/headlines";
 import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
-import { Article } from "@/types/news.types";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
 export default function HomePage() {
   const { articles, loading, error, hasMore, observerRef } =
     useInfiniteArticles();
-  const [quizModalState, setQuizModalState] = useState<{
-    isOpen: boolean;
-    article: Article | null;
-  }>({
-    isOpen: false,
-    article: null,
-  });
-
-  const handleQuizClick = (article: Article) => {
-    setQuizModalState({ isOpen: true, article });
-  };
-
-  const handleQuizClose = () => {
-    setQuizModalState({ isOpen: false, article: null });
-  };
 
   return (
     <main className=" bg-background">
@@ -44,8 +26,8 @@ export default function HomePage() {
           {articles.map((article) => (
             <ArticleCard
               key={article.id}
+              id={`article-${article.id}`}
               article={article}
-              onQuizClick={() => handleQuizClick(article)}
             />
           ))}
         </div>
@@ -81,15 +63,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
-      {/* Quiz Modal */}
-      {quizModalState.article && (
-        <QuizModal
-          isOpen={quizModalState.isOpen}
-          onClose={handleQuizClose}
-          mcqs={quizModalState.article.mcqs || []}
-        />
-      )}
     </main>
   );
 }

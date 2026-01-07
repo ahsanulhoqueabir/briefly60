@@ -16,10 +16,13 @@ import Image from "next/image";
 import { useState } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import SoundWave from "./SoundWave";
+import AuthRequired from "./AuthRequired";
+import QuizModal from "./QuizModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ArticleCardProps {
   article: Article;
-  onQuizClick: () => void;
+  id?: string;
 }
 
 const validUrl = (url: string): boolean => {
@@ -31,13 +34,12 @@ const validUrl = (url: string): boolean => {
   }
 };
 
-export default function ArticleCard({
-  article,
-  onQuizClick,
-}: ArticleCardProps) {
+export default function ArticleCard({ article, id }: ArticleCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const { user } = useAuth();
 
   // Text-to-Speech hook for the summary
   const {
@@ -60,6 +62,15 @@ export default function ArticleCard({
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     // TODO: Implement bookmark functionality
+  };
+
+  const handleQuizClick = () => {
+    // This will only be called if user is authenticated (due to AuthRequired wrapper)
+    setShowQuizModal(true);
+  };
+
+  const handleQuizClose = () => {
+    setShowQuizModal(false);
   };
 
   const handleAudioPlay = () => {
@@ -245,29 +256,33 @@ export default function ArticleCard({
 
               {/* Quiz Button (only if MCQs exist) */}
               {article.mcqs && article.mcqs.length > 0 && (
-                <button
-                  onClick={onQuizClick}
-                  className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
-                  aria-label="Take quiz"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                </button>
+                <AuthRequired referenceId={id || `article-${article.id}`}>
+                  <button
+                    onClick={handleQuizClick}
+                    className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
+                    aria-label="Take quiz"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </button>
+                </AuthRequired>
               )}
 
               {/* Bookmark Button */}
-              <button
-                onClick={handleBookmark}
-                className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
-                  isBookmarked
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:opacity-90"
-                }`}
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-              >
-                <Bookmark
-                  className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
-                />
-              </button>
+              <AuthRequired referenceId={id || `article-${article.id}`}>
+                <button
+                  onClick={handleBookmark}
+                  className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
+                    isBookmarked
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:opacity-90"
+                  }`}
+                  aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                >
+                  <Bookmark
+                    className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
+                  />
+                </button>
+              </AuthRequired>
 
               {/* Share Button */}
               <button
@@ -293,6 +308,15 @@ export default function ArticleCard({
           </div>
         </div>
       </div>
+
+      {/* Quiz Modal */}
+      {user && showQuizModal && article.mcqs && article.mcqs.length > 0 && (
+        <QuizModal
+          isOpen={showQuizModal}
+          onClose={handleQuizClose}
+          mcqs={article.mcqs}
+        />
+      )}
     </article>
   );
 }

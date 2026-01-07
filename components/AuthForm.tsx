@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -15,6 +15,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const { signInWithEmail, signUpWithEmail, loading, error, clearError } =
     useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -93,8 +95,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         });
       }
 
-      // Redirect to home page on successful authentication
-      router.push("/");
+      // Redirect to return URL if provided, otherwise go to home page
+      const redirectPath = returnUrl || "/";
+      router.push(redirectPath);
     } catch (error) {
       // Error is handled by the auth context
       console.error("Authentication error:", error);
