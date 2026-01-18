@@ -28,7 +28,7 @@ export interface User {
   plan: Plan;
   rbac?: "superadmin" | "admin" | "editor" | "user";
   subscriptions?: Subscription[];
-  bookmarks?: Array<{ news: string }>;
+  bookmarkedNewsIds?: string[]; // Array of news IDs that the user has bookmarked
   quizzes?: string[];
 }
 

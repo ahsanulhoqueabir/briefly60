@@ -1,12 +1,18 @@
 export interface BookmarkCreatePayload {
-  news: string;
+  news: string; // News article ID
 }
 
 export interface Bookmark {
-  id: string;
-  news: string;
-  user: string;
-  date_created?: string;
+  _id: string;
+  user_id: string;
+  news_id: string;
+  news_title?: string;
+  news_source?: string;
+  news_url?: string;
+  bookmarked_at: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface BookmarkResponse {
@@ -21,5 +27,13 @@ export interface BookmarkCheckResponse {
   isBookmarked: boolean;
   bookmarkId: string | null;
   message?: string;
+  error?: string;
+}
+
+export interface BookmarkToggleResponse {
+  success: boolean;
+  message?: string;
+  isBookmarked: boolean;
+  bookmarkId: string | null;
   error?: string;
 }

@@ -10,8 +10,16 @@ export function useBookmark(articleId: string) {
   const { user } = useAuth();
 
   const isBookmarked = useMemo(() => {
-    if (!user || !user.bookmarks) return false;
-    return user.bookmarks.some((bookmark) => bookmark.news === articleId);
+    if (
+      !user ||
+      !user.bookmarkedNewsIds ||
+      user.bookmarkedNewsIds.length === 0
+    ) {
+      return false;
+    }
+
+    // Check if the article ID exists in the bookmarkedNewsIds array
+    return user.bookmarkedNewsIds.includes(articleId);
   }, [user, articleId]);
 
   return {

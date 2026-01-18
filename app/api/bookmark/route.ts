@@ -6,22 +6,27 @@ import { NextResponse } from "next/server";
 export const POST = withAuth(async (req: Request, user?: JwtPayload) => {
   try {
     const body = await req.json();
+
+    // Validate news ID
     if (!body.news) {
       return NextResponse.json(
         {
           success: false,
           message: "News ID is required to toggle bookmark.",
+          error: "MISSING_NEWS_ID",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
     if (!user) {
       return NextResponse.json(
         {
           success: false,
           message: "Authentication required to toggle bookmark.",
+          error: "UNAUTHORIZED",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -36,7 +41,7 @@ export const POST = withAuth(async (req: Request, user?: JwtPayload) => {
           isBookmarked: result.isBookmarked,
           bookmarkId: result.bookmarkId,
         },
-        { status: 200 }
+        { status: 200 },
       );
     } else {
       return NextResponse.json(
@@ -45,17 +50,18 @@ export const POST = withAuth(async (req: Request, user?: JwtPayload) => {
           message: result.message,
           error: result.error,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   } catch (error) {
+    console.error("Toggle bookmark API error:", error);
     return NextResponse.json(
       {
         success: false,
         message: "An error occurred while processing the request.",
-        error: error,
+        error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });
@@ -67,8 +73,9 @@ export const GET = withAuth(async (req: Request, user?: JwtPayload) => {
         {
           success: false,
           message: "Authentication required to get bookmarks.",
+          error: "UNAUTHORIZED",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -91,7 +98,7 @@ export const GET = withAuth(async (req: Request, user?: JwtPayload) => {
             message: result.message,
             error: result.error,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -110,17 +117,18 @@ export const GET = withAuth(async (req: Request, user?: JwtPayload) => {
           message: result.message,
           error: result.error,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   } catch (error) {
+    console.error("Get bookmarks API error:", error);
     return NextResponse.json(
       {
         success: false,
         message: "An error occurred while processing the request.",
-        error: error,
+        error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });
@@ -132,8 +140,9 @@ export const DELETE = withAuth(async (req: Request, user?: JwtPayload) => {
         {
           success: false,
           message: "Authentication required to delete a bookmark.",
+          error: "UNAUTHORIZED",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -145,8 +154,9 @@ export const DELETE = withAuth(async (req: Request, user?: JwtPayload) => {
         {
           success: false,
           message: "Bookmark ID is required to delete a bookmark.",
+          error: "MISSING_BOOKMARK_ID",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -163,17 +173,18 @@ export const DELETE = withAuth(async (req: Request, user?: JwtPayload) => {
           message: result.message,
           error: result.error,
         },
-        { status: 400 }
+        { status: result.error === "BOOKMARK_NOT_FOUND" ? 404 : 400 },
       );
     }
   } catch (error) {
+    console.error("Delete bookmark API error:", error);
     return NextResponse.json(
       {
         success: false,
         message: "An error occurred while processing the request.",
-        error: error,
+        error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });

@@ -5,6 +5,7 @@ import { validateStrongPassword } from "@/lib/validation";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User.model";
 import Subscription from "@/models/Subscription.model";
+import Bookmark from "@/models/Bookmark.model";
 
 export class AuthService {
   /**
@@ -57,6 +58,15 @@ export class AuthService {
         is_active: true,
       }).sort({ end_date: -1 });
 
+      // Get bookmarked news IDs
+      const bookmarks = await Bookmark.find({ user_id: user._id })
+        .select("news_id")
+        .lean();
+
+      const bookmarkedNewsIds = bookmarks.map((bookmark) =>
+        bookmark.news_id.toString(),
+      );
+
       // Return user without password
       const userResponse = user.toJSON();
 
@@ -70,6 +80,7 @@ export class AuthService {
           rbac: userResponse.rbac,
           preferences: userResponse.preferences,
           plan: activeSubscription?.plan || "free",
+          bookmarkedNewsIds,
         },
         token,
       };
@@ -152,6 +163,7 @@ export class AuthService {
           rbac: userResponse.rbac,
           preferences: userResponse.preferences,
           plan: "free",
+          bookmarkedNewsIds: [], // New users have no bookmarks
         },
         token,
       };
@@ -166,7 +178,7 @@ export class AuthService {
   }
 
   /**
-   * Get user by ID with subscription info
+   * Get user by ID with subscription info and bookmarked news IDs
    */
   static async getUserbyId(userId: string) {
     try {
@@ -187,6 +199,15 @@ export class AuthService {
         is_active: true,
       }).sort({ end_date: -1 });
 
+      // Get bookmarked news IDs
+      const bookmarks = await Bookmark.find({ user_id: user._id })
+        .select("news_id")
+        .lean();
+
+      const bookmarkedNewsIds = bookmarks.map((bookmark) =>
+        bookmark.news_id.toString(),
+      );
+
       const userResponse = user.toJSON();
 
       return {
@@ -199,6 +220,7 @@ export class AuthService {
           rbac: userResponse.rbac,
           preferences: userResponse.preferences,
           plan: activeSubscription?.plan || "free",
+          bookmarkedNewsIds, // Array of news IDs that user has bookmarked
         },
       };
     } catch (error) {
