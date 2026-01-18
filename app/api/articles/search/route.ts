@@ -1,9 +1,4 @@
-import { NewsService } from "@/services/news.services";
-import {
-  ArticleQueryParams,
-  ArticleStatus,
-  SortParams,
-} from "@/types/news.types";
+import { ArticleService } from "@/services/article.service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -11,19 +6,14 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Searches in:
  * - title
- * - corrected_title
+ * - description
  * - content
- * - summary_60_bn
- * - summary_60_en
+ *
+ * Uses MongoDB text search index
  *
  * Query Parameters:
  * - q: search query (required)
- * - page: number (default: 1)
- * - limit: number (default: 20, max: 100)
- * - status: published | draft | archived
- * - category: string
- * - sort_by: date_created | date_updated | published_at | importance | clickbait_score
- * - sort_order: asc | desc
+ * - limit: number (default: 20)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -32,67 +22,32 @@ export async function GET(request: NextRequest) {
 
     if (!query) {
       return NextResponse.json(
-        { error: "Search query (q) is required" },
-        { status: 400 }
+        {
+          success: false,
+          message: "Search query (q) is required",
+        },
+        { status: 400 },
       );
     }
 
-    // Build additional parameters
-    const params: Omit<ArticleQueryParams, "search"> = {};
+    const limit = parseInt(searchParams.get("limit") || "20");
 
-    const page = searchParams.get("page");
-    if (page) {
-      params.page = parseInt(page, 10);
+    const result = await ArticleService.searchArticles(query, limit);
+
+    if (result.success) {
+      return NextResponse.json(result, { status: 200 });
+    } else {
+      return NextResponse.json(result, { status: 400 });
     }
-
-    const limit = searchParams.get("limit");
-    if (limit) {
-      params.limit = parseInt(limit, 10);
-    }
-
-    const status = searchParams.get("status");
-    if (status && ["published", "draft", "archived"].includes(status)) {
-      params.status = status as ArticleStatus;
-    }
-
-    const category = searchParams.get("category");
-    if (category) {
-      params.category = category;
-    }
-
-    const sortBy = searchParams.get("sort_by");
-    if (
-      sortBy &&
-      [
-        "date_created",
-        "date_updated",
-        "published_at",
-        "importance",
-        "clickbait_score",
-      ].includes(sortBy)
-    ) {
-      params.sort_by = sortBy as SortParams["sort_by"];
-    }
-
-    const sortOrder = searchParams.get("sort_order");
-    if (sortOrder && ["asc", "desc"].includes(sortOrder)) {
-      params.sort_order = sortOrder as SortParams["sort_order"];
-    }
-
-    const result = await NewsService.searchArticles(query, params);
-
-    return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error in GET /api/articles/search:", error);
-
+    console.error("Search articles error:", error);
     return NextResponse.json(
       {
-        error: "Failed to search articles",
-        message: errorMessage,
+        success: false,
+        message: "An error occurred while searching articles.",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

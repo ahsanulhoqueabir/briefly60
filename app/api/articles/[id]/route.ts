@@ -1,103 +1,105 @@
-import { NewsService } from "@/services/news.services";
+import { withAdmin, withEditor } from "@/middleware/verify-auth";
+import { ArticleService } from "@/services/article.service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/articles/[id] - Get a single article by ID
  *
  * Query Parameters:
- * - fields: comma-separated field names (optional)
+ * - includeQuiz: boolean (optional, default: false)
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const searchParams = request.nextUrl.searchParams;
+    const includeQuiz = searchParams.get("includeQuiz") === "true";
 
-    // Fields selection
-    const fields = searchParams.get("fields");
-    const fieldArray = fields
-      ? fields.split(",").map((f) => f.trim())
-      : undefined;
+    const result = await ArticleService.getArticleById(id, includeQuiz);
 
-    const article = await NewsService.getArticleById(id, fieldArray);
-
-    return NextResponse.json(article, { status: 200 });
+    if (result.success) {
+      return NextResponse.json(result, { status: 200 });
+    } else {
+      return NextResponse.json(result, { status: 404 });
+    }
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error in GET /api/articles/[id]:", error);
-
+    console.error("Get article error:", error);
     return NextResponse.json(
       {
-        error: "Failed to fetch article",
-        message: errorMessage,
+        success: false,
+        message: "An error occurred while fetching the article.",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
- * PATCH /api/articles/[id] - Update an article
+ * PATCH /api/articles/[id] - Update an article (Editor/Admin only)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const PATCH = withEditor(
+  async (
+    request: NextRequest,
+    user: any,
+    { params }: { params: Promise<{ id: string }> },
+  ) => {
+    try {
+      const { id } = await params;
+      const body = await request.json();
 
-    const updatedArticle = await NewsService.updateArticle({
-      id,
-      ...body,
-    });
+      const result = await ArticleService.updateArticle(id, body);
 
-    return NextResponse.json(updatedArticle, { status: 200 });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error in PATCH /api/articles/[id]:", error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to update article",
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
-  }
-}
+      if (result.success) {
+        return NextResponse.json(result, { status: 200 });
+      } else {
+        return NextResponse.json(result, { status: 400 });
+      }
+    } catch (error) {
+      console.error("Update article error:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An error occurred while updating the article.",
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        { status: 500 },
+      );
+    }
+  },
+);
 
 /**
- * DELETE /api/articles/[id] - Delete an article
+ * DELETE /api/articles/[id] - Delete an article (Admin only)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
+export const DELETE = withAdmin(
+  async (
+    request: NextRequest,
+    user: any,
+    { params }: { params: Promise<{ id: string }> },
+  ) => {
+    try {
+      const { id } = await params;
 
-    await NewsService.deleteArticle(id);
+      const result = await ArticleService.deleteArticle(id);
 
-    return NextResponse.json(
-      { message: "Article deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error in DELETE /api/articles/[id]:", error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to delete article",
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
-  }
-}
+      if (result.success) {
+        return NextResponse.json(result, { status: 200 });
+      } else {
+        return NextResponse.json(result, { status: 404 });
+      }
+    } catch (error) {
+      console.error("Delete article error:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An error occurred while deleting the article.",
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        { status: 500 },
+      );
+    }
+  },
+);

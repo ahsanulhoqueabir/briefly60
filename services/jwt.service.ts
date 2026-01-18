@@ -2,30 +2,29 @@ import { jwtSecret } from "@/config/env";
 import * as jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 import { JwtVerifyResult, UserRole } from "@/types/jwt.types";
-import { User } from "@/types/auth.types";
+
+export interface TokenUser {
+  id: string;
+  email: string;
+  name: string;
+  rbac: "superadmin" | "admin" | "editor" | "user";
+  image?: string;
+}
 
 export class JWTService {
   /**
    * Generate JWT token for authenticated user
    */
-  static generateJWTToken(user: User): string {
+  static generateJWTToken(user: TokenUser): string {
     return jwt.sign(
       {
         id: user.id,
         email: user.email,
+        name: user.name,
         role: user.rbac || "user",
-        plan_expires: user.subscriptions
-          ? new Date(
-              Math.max(
-                ...user.subscriptions.map((sub) =>
-                  new Date(sub.end_date).getTime()
-                )
-              )
-            )
-          : undefined,
       },
       jwtSecret.secret,
-      { expiresIn: jwtSecret.expiresIn } as jwt.SignOptions
+      { expiresIn: jwtSecret.expiresIn } as jwt.SignOptions,
     );
   }
 
@@ -38,7 +37,7 @@ export class JWTService {
         id: string;
         email: string;
         role: UserRole;
-        plan_expires?: Date;
+        name?: string;
       };
       if (
         !decoded ||
@@ -57,7 +56,7 @@ export class JWTService {
           id: decoded.id,
           email: decoded.email,
           role: decoded.role || "user",
-          plan_expires: decoded.plan_expires,
+          name: decoded.name,
         },
       };
     } catch (error) {

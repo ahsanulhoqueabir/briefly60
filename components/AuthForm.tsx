@@ -2,10 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  loginSchema,
+  signUpSchema,
+  LoginFormData,
+  SignUpFormData,
+  calculatePasswordStrength,
+} from "@/lib/validation";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -18,17 +27,27 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passwordStrength, setPasswordStrength] = useState<{
+    strength: "weak" | "medium" | "strong" | "very-strong";
+    score: number;
+  } | null>(null);
 
   const isLogin = mode === "login";
+
+  // Setup form with React Hook Form and Zod
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+  });
+
+  const signUpForm = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onChange",
+  });
+
+  const form = isLogin ? loginForm : signUpForm;
 
   // Clear any existing auth errors when component mounts
   useEffect(() => {
@@ -36,63 +55,24 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
+  // Monitor password strength for sign up
+  useEffect(() => {
     if (!isLogin) {
-      if (!formData.name) {
-        newErrors.name = "Name is required";
-      }
-      if (!formData.confirmPassword) {
-        newErrors.confirmPassword = "Please confirm your password";
-      } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
-      }
+      const subscription = signUpForm.watch((value, { name }) => {
+        if (name === "password" && value.password) {
+          setPasswordStrength(calculatePasswordStrength(value.password));
+        }
+      });
+      return () => subscription.unsubscribe();
     }
+  }, [isLogin, signUpForm]);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
+  const onSubmit = async (data: LoginFormData | SignUpFormData) => {
     try {
       if (isLogin) {
-        await signInWithEmail({
-          email: formData.email,
-          password: formData.password,
-        });
+        await signInWithEmail(data as LoginFormData);
       } else {
-        await signUpWithEmail({
-          first_name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          confirm_password: formData.confirmPassword,
-        });
+        await signUpWithEmail(data as SignUpFormData);
       }
 
       // Redirect to return URL if provided, otherwise go to home page
@@ -104,13 +84,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     }
   };
 
+  const getPasswordStrengthColor = () => {
+    if (!passwordStrength) return "bg-gray-200";
+    switch (passwordStrength.strength) {
+      case "weak":
+        return "bg-red-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "strong":
+        return "bg-blue-500";
+      case "very-strong":
+        return "bg-green-500";
+      default:
+        return "bg-gray-200";
+    }
+  };
+
+  const getPasswordStrengthWidth = () => {
+    if (!passwordStrength) return "0%";
+    return `${(passwordStrength.score / 7) * 100}%`;
+  };
+
   return (
-    <div className="  flex flex-col justify-center  py-10 sm:py-5 sm:px-6 lg:px-8">
+    <div className="flex flex-col justify-center py-10 sm:py-5 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-bold ">
+        <h2 className="text-center text-3xl font-bold">
           {isLogin ? "Sign in to your account" : "Create your account"}
         </h2>
-        <p className="mt-2 text-center text-sm ">
+        <p className="mt-2 text-center text-sm">
           {isLogin ? (
             <>
               Don&apos;t have an account?{" "}
@@ -136,36 +137,39 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-2">
-        <div className=" py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Name Field (Register only) */}
             {!isLogin && (
               <div>
                 <label
-                  htmlFor="name"
+                  htmlFor="first_name"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Full Name
+                  Name
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="name"
-                    name="name"
+                    id="first_name"
                     type="text"
-                    value={formData.name}
-                    onChange={handleInputChange}
+                    {...signUpForm.register("first_name")}
                     className={cn(
                       "appearance-none block w-full pl-10 pr-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                      errors.name ? "border-red-300" : "border-gray-300"
+                      signUpForm.formState.errors.first_name
+                        ? "border-red-300"
+                        : "border-gray-300",
                     )}
-                    placeholder="Enter your full name"
+                    placeholder="Enter your name"
                   />
                 </div>
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                {signUpForm.formState.errors.first_name && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {signUpForm.formState.errors.first_name.message}
+                  </p>
                 )}
               </div>
             )}
@@ -184,20 +188,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 </div>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
+                  {...form.register("email")}
                   className={cn(
                     "appearance-none block w-full pl-10 pr-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.email ? "border-red-300" : "border-gray-300"
+                    form.formState.errors.email
+                      ? "border-red-300"
+                      : "border-gray-300",
                   )}
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              {form.formState.errors.email && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {form.formState.errors.email.message}
+                </p>
               )}
             </div>
 
@@ -215,14 +222,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 </div>
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete={isLogin ? "current-password" : "new-password"}
-                  value={formData.password}
-                  onChange={handleInputChange}
+                  {...form.register("password")}
                   className={cn(
                     "appearance-none block w-full pl-10 pr-10 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.password ? "border-red-300" : "border-gray-300"
+                    form.formState.errors.password
+                      ? "border-red-300"
+                      : "border-gray-300",
                   )}
                   placeholder="Enter your password"
                 />
@@ -238,8 +245,42 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              {form.formState.errors.password && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+              {/* Password Strength Indicator (Sign Up only) */}
+              {!isLogin && passwordStrength && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-gray-600">Password strength:</span>
+                    <span
+                      className={cn(
+                        "font-medium capitalize",
+                        passwordStrength.strength === "weak" && "text-red-600",
+                        passwordStrength.strength === "medium" &&
+                          "text-yellow-600",
+                        passwordStrength.strength === "strong" &&
+                          "text-blue-600",
+                        passwordStrength.strength === "very-strong" &&
+                          "text-green-600",
+                      )}
+                    >
+                      {passwordStrength.strength.replace("-", " ")}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full transition-all duration-300",
+                        getPasswordStrengthColor(),
+                      )}
+                      style={{ width: getPasswordStrengthWidth() }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
@@ -247,7 +288,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             {!isLogin && (
               <div>
                 <label
-                  htmlFor="confirmPassword"
+                  htmlFor="confirm_password"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Confirm Password
@@ -257,17 +298,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="confirmPassword"
-                    name="confirmPassword"
+                    id="confirm_password"
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
+                    {...signUpForm.register("confirm_password")}
                     className={cn(
                       "appearance-none block w-full pl-10 pr-10 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                      errors.confirmPassword
+                      signUpForm.formState.errors.confirm_password
                         ? "border-red-300"
-                        : "border-gray-300"
+                        : "border-gray-300",
                     )}
                     placeholder="Confirm your password"
                   />
@@ -283,9 +322,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     )}
                   </button>
                 </div>
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.confirmPassword}
+                {signUpForm.formState.errors.confirm_password && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {signUpForm.formState.errors.confirm_password.message}
                   </p>
                 )}
               </div>
@@ -303,21 +343,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               </div>
             )}
 
-            {/* Submit Button */}
             {/* Error Display */}
             {(error?.error || error?.details) && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                {error.error || error.details}
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <span>{error.error || error.details}</span>
               </div>
             )}
 
+            {/* Submit Button */}
             <div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className={cn(
                   "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors",
-                  loading && "opacity-50 cursor-not-allowed"
+                  (loading || !form.formState.isValid) &&
+                    "opacity-50 cursor-not-allowed",
                 )}
               >
                 {loading ? (

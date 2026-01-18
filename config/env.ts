@@ -18,3 +18,8 @@ export const cloudinaryConfig = {
   apiKey: process.env.CLOUDINARY_API_KEY!,
   apiSecret: process.env.CLOUDINARY_API_SECRET!,
 };
+
+export const baseurl =
+  process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+export const mongodb = process.env.MONGODB_URI!;

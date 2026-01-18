@@ -11,7 +11,7 @@ export interface JwtVerifyResult {
     id: string;
     email: string;
     role: UserRole;
-    plan_expires?: Date;
+    name?: string;
   };
   error?: string;
 }
@@ -20,7 +20,7 @@ export interface JwtPayload {
   id: string;
   email: string;
   role: UserRole;
-  plan_expires?: Date;
+  name?: string;
   iat?: number;
   exp?: number;
 }
