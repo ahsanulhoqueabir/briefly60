@@ -7,9 +7,9 @@ import { Types } from "mongoose";
 
 export interface IQuizAnswer {
   question: string;
-  user_answer: string;
+  user_answer: string; // Can be empty string or "(Skipped)" for skipped questions
   correct_answer: string;
-  is_correct: boolean;
+  is_correct: boolean; // Always false for skipped questions
 }
 
 export interface IQuizAttempt {
@@ -18,12 +18,14 @@ export interface IQuizAttempt {
   article_id: Types.ObjectId | string;
   article_title?: string;
   article_category?: string;
-  score: number;
-  total_questions: number;
-  correct_answers: number;
+  score: number; // Percentage based on answered questions only
+  total_questions: number; // Total questions in quiz
+  correct_answers: number; // Number of correct answers
+  answered_questions?: number; // Number of questions actually answered
+  skipped_questions?: number; // Number of questions skipped
   time_taken?: number; // in seconds
   completed_at: Date;
-  answers: IQuizAnswer[];
+  answers: IQuizAnswer[]; // Includes all questions (answered + skipped)
   createdAt: Date;
   updatedAt: Date;
 }

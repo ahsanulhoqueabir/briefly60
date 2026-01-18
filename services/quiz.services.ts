@@ -56,6 +56,7 @@ export class QuizService {
       const quizQuestions = article.quiz_questions;
       const totalQuestions = quizQuestions.length;
 
+      // Allow partial submissions (users can skip questions)
       if (payload.answers.length !== totalQuestions) {
         return {
           success: false,
@@ -64,6 +65,8 @@ export class QuizService {
       }
 
       let correctAnswers = 0;
+      let answeredQuestions = 0;
+      let skippedQuestions = 0;
       const evaluatedAnswers: IQuizAnswer[] = [];
 
       // Check each answer
@@ -73,25 +76,32 @@ export class QuizService {
           (a) => a.question === question.question,
         );
 
-        if (!userAnswer) {
-          return {
-            success: false,
-            message: `Missing answer for question: ${question.question}`,
-          };
+        // Handle missing or skipped questions
+        const answer = userAnswer?.user_answer?.trim() || "";
+        const isSkipped = answer === "";
+
+        if (isSkipped) {
+          skippedQuestions++;
+        } else {
+          answeredQuestions++;
         }
 
-        const isCorrect = userAnswer.user_answer === question.correct_answer;
+        const isCorrect = !isSkipped && answer === question.correct_answer;
         if (isCorrect) correctAnswers++;
 
         evaluatedAnswers.push({
           question: question.question,
-          user_answer: userAnswer.user_answer,
+          user_answer: answer || "(Skipped)",
           correct_answer: question.correct_answer,
           is_correct: isCorrect,
         });
       }
 
-      const score = Math.round((correctAnswers / totalQuestions) * 100);
+      // Calculate score based on answered questions only
+      const score =
+        answeredQuestions > 0
+          ? Math.round((correctAnswers / answeredQuestions) * 100)
+          : 0;
 
       // Create quiz attempt
       const attempt = await QuizAttempt.create({
@@ -102,6 +112,8 @@ export class QuizService {
         score,
         total_questions: totalQuestions,
         correct_answers: correctAnswers,
+        answered_questions: answeredQuestions,
+        skipped_questions: skippedQuestions,
         time_taken: payload.time_taken,
         completed_at: new Date(),
         answers: evaluatedAnswers,
@@ -115,6 +127,8 @@ export class QuizService {
           score,
           correct_answers: correctAnswers,
           total_questions: totalQuestions,
+          answered_questions: answeredQuestions,
+          skipped_questions: skippedQuestions,
           percentage: score,
           answers: evaluatedAnswers,
         },

@@ -1,4 +1,4 @@
-import { withAdmin, withEditor } from "@/middleware/verify-auth";
+import { withEditor } from "@/middleware/verify-auth";
 import { ArticleService } from "@/services/article.service";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const result = await ArticleService.getArticles(options);
 
     if (result.success) {
-      return NextResponse.json(result, { status: 200 });
+      return NextResponse.json(result.data, { status: 200 });
     } else {
       return NextResponse.json(result, { status: 400 });
     }
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         message: "An error occurred while fetching articles.",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -75,44 +75,7 @@ export const POST = withEditor(async (req: Request) => {
         message: "An error occurred while creating the article.",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });
-        "published_at",
-        "importance",
-        "clickbait_score",
-      ].includes(sortBy)
-    ) {
-      queryParams.sort_by = sortBy as SortParams["sort_by"];
-    }
-
-    const sortOrder = searchParams.get("sort_order");
-    if (sortOrder && ["asc", "desc"].includes(sortOrder)) {
-      queryParams.sort_order = sortOrder as SortParams["sort_order"];
-    }
-
-    // Fields selection
-    const fields = searchParams.get("fields");
-    if (fields) {
-      queryParams.fields = fields.split(",").map((f) => f.trim());
-    }
-
-    // Fetch articles
-    const result = await NewsService.getArticles(queryParams);
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error in GET /api/articles:", error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to fetch articles",
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
-  }
-}

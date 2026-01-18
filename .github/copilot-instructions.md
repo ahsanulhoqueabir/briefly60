@@ -10,6 +10,7 @@
 - Ensure that the code is optimized for performance, particularly in areas involving data retrieval and manipulation.
 - Use shadcn/ui for components and styling.
 - Dont modify `global.css` directly. Instead extend it using shadcn/ui conventions.
+- Dont use gradient classes directly. Instead use `bg-linear-to-r` etc. as per shadcn/ui conventions. and try to avoid gradients unless necessary.
 
 ## File-Specific Instructions
 

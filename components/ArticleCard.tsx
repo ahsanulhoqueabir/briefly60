@@ -43,7 +43,7 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const { user, refreshUser } = useAuth();
   const axios = usePrivateAxios();
-  const { isBookmarked } = useBookmark(article.id);
+  const { isBookmarked } = useBookmark(article._id);
 
   // Text-to-Speech hook for the summary
   const {
@@ -69,17 +69,18 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
     setIsBookmarkLoading(true);
     try {
       const response = await axios.post("/api/bookmark", {
-        news: article.id,
+        news: article._id,
       });
 
       if (response.data.success) {
         await refreshUser();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error handling bookmark:", error);
       alert(
         error?.response?.data?.message ||
-          "বুকমার্ক প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+          "বুকমার্ক প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
       );
     } finally {
       setIsBookmarkLoading(false);
@@ -135,7 +136,7 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
       } else {
         // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(
-          `${article.title}\n\n${article.summary_60_bn}\n\n${article.source_url}`
+          `${article.title}\n\n${article.summary_60_bn}\n\n${article.source_url}`,
         );
         alert("লিংক কপি করা হয়েছে!");
       }
@@ -245,8 +246,8 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
                       isPaused
                         ? "Resume audio"
                         : isPlaying
-                        ? "Pause audio"
-                        : "Play audio"
+                          ? "Pause audio"
+                          : "Play audio"
                     }
                   >
                     {isPaused ? (
@@ -277,8 +278,8 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
               )}
 
               {/* Quiz Button (only if MCQs exist) */}
-              {article.mcqs && article.mcqs.length > 0 && (
-                <AuthRequired referenceId={id || `article-${article.id}`}>
+              {article.quiz_questions && article.quiz_questions.length > 0 && (
+                <AuthRequired referenceId={id || `article-${article._id}`}>
                   <button
                     onClick={handleQuizClick}
                     className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
@@ -290,7 +291,7 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
               )}
 
               {/* Bookmark Button */}
-              <AuthRequired referenceId={id || `article-${article.id}`}>
+              <AuthRequired referenceId={id || `article-${article._id}`}>
                 <button
                   onClick={handleBookmark}
                   disabled={isBookmarkLoading}
@@ -335,14 +336,17 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
       </div>
 
       {/* Quiz Modal */}
-      {user && showQuizModal && article.mcqs && article.mcqs.length > 0 && (
-        <QuizModal
-          isOpen={showQuizModal}
-          onClose={handleQuizClose}
-          mcqs={article.mcqs}
-          newsId={article.id}
-        />
-      )}
+      {user &&
+        showQuizModal &&
+        article.quiz_questions &&
+        article.quiz_questions.length > 0 && (
+          <QuizModal
+            isOpen={showQuizModal}
+            onClose={handleQuizClose}
+            mcqs={article.quiz_questions}
+            newsId={article._id}
+          />
+        )}
     </article>
   );
 }

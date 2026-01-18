@@ -23,6 +23,7 @@ export default function QuizModal({
   const [showResults, setShowResults] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const axios = usePrivateAxios();
 
   if (!isOpen) return null;
@@ -40,34 +41,39 @@ export default function QuizModal({
   const submitQuizResults = async (answers: string[]) => {
     try {
       setIsSubmitting(true);
+      setErrorMessage("");
 
-      // Prepare attempted items
-      const attemptedItems = answers.map((answer, index) => ({
-        question_index: index.toString(),
-        is_correct: answer === parsedMcqs[index].correct_answer,
-      }));
+      // Check if at least one question is answered
+      const hasAtLeastOneAnswer = answers.some(
+        (answer) => answer && answer.trim() !== "",
+      );
 
-      // Calculate right answers
-      const rightAnswers = attemptedItems.filter(
-        (item) => item.is_correct
-      ).length;
+      if (!hasAtLeastOneAnswer) {
+        setErrorMessage("অন্তত একটি প্রশ্নের উত্তর দিতে হবে!");
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Prepare payload
+      // Prepare answers array for ALL questions (including skipped ones)
+      const answersArray = answers.map((answer, index) => {
+        return {
+          question: parsedMcqs[index].question,
+          user_answer: answer || "", // Send empty string for skipped questions
+        };
+      });
+
+      // Prepare payload matching API expectations
       const payload = {
-        news: newsId,
-        attempted: [
-          {
-            right_answers: rightAnswers,
-            attempted: attemptedItems,
-            total_question: parsedMcqs.length,
-          },
-        ],
+        article_id: newsId,
+        answers: answersArray,
       };
 
       // Submit to API
-      await axios.post("/api/quiz", payload);
+      const response = await axios.post("/api/quiz", payload);
+      console.log("Quiz submitted successfully:", response.data);
     } catch (error) {
       console.error("Failed to submit quiz:", error);
+      setErrorMessage("কুইজ জমা দিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
     } finally {
       setIsSubmitting(false);
     }
@@ -76,6 +82,7 @@ export default function QuizModal({
   const handleNext = () => {
     if (selectedOption === null) return;
 
+    setErrorMessage(""); // Clear any previous errors
     const newAnswers = [...selectedAnswers, selectedOption];
     setSelectedAnswers(newAnswers);
 
@@ -90,10 +97,23 @@ export default function QuizModal({
   };
 
   const handleSkip = () => {
+    setErrorMessage(""); // Clear any previous errors
     const newAnswers = [...selectedAnswers, ""];
     setSelectedAnswers(newAnswers);
 
     if (isLastQuestion) {
+      // Check if at least one question is answered before showing results
+      const hasAtLeastOneAnswer = newAnswers.some(
+        (answer) => answer && answer.trim() !== "",
+      );
+
+      if (!hasAtLeastOneAnswer) {
+        setErrorMessage(
+          "অন্তত একটি প্রশ্নের উত্তর দিতে হবে! আগের প্রশ্নে ফিরে যান এবং উত্তর দিন।",
+        );
+        return;
+      }
+
       setShowResults(true);
       // Submit quiz results
       submitQuizResults(newAnswers);
@@ -103,11 +123,24 @@ export default function QuizModal({
     }
   };
 
+  const handleBack = () => {
+    if (currentQuestionIndex > 0) {
+      setErrorMessage(""); // Clear any errors
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      // Restore previous answer
+      const previousAnswer = selectedAnswers[currentQuestionIndex - 1];
+      setSelectedOption(previousAnswer || null);
+      // Remove the last answer from the array
+      setSelectedAnswers(selectedAnswers.slice(0, -1));
+    }
+  };
+
   const handleClose = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswers([]);
     setShowResults(false);
     setSelectedOption(null);
+    setErrorMessage("");
     onClose();
   };
 
@@ -205,8 +238,24 @@ export default function QuizModal({
                 </div>
               </div>
 
-              {/* Next Button */}
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
               <div className="flex gap-3">
+                {currentQuestionIndex > 0 && (
+                  <button
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    className="py-3 px-6 bg-secondary text-secondary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    পূর্ববর্তী
+                  </button>
+                )}
                 <button
                   onClick={handleSkip}
                   disabled={isSubmitting}
@@ -222,8 +271,8 @@ export default function QuizModal({
                   {isSubmitting
                     ? "জমা দেওয়া হচ্ছে..."
                     : isLastQuestion
-                    ? "সম্পন্ন করুন"
-                    : "পরবর্তী"}
+                      ? "সম্পন্ন করুন"
+                      : "পরবর্তী"}
                 </button>
               </div>
             </>
@@ -237,8 +286,8 @@ export default function QuizModal({
                       percentage >= 80
                         ? "bg-green-100 text-green-600"
                         : percentage >= 50
-                        ? "bg-yellow-100 text-yellow-600"
-                        : "bg-red-100 text-red-600"
+                          ? "bg-yellow-100 text-yellow-600"
+                          : "bg-red-100 text-red-600"
                     }`}
                   >
                     {percentage >= 80 ? (
@@ -252,8 +301,8 @@ export default function QuizModal({
                     {percentage >= 80
                       ? "অসাধারণ!"
                       : percentage >= 50
-                      ? "ভালো হয়েছে!"
-                      : "চেষ্টা চালিয়ে যান!"}
+                        ? "ভালো হয়েছে!"
+                        : "চেষ্টা চালিয়ে যান!"}
                   </h3>
 
                   <p className="text-lg text-muted-foreground">
@@ -277,8 +326,8 @@ export default function QuizModal({
                           isSkipped
                             ? "border-gray-400 bg-gray-50"
                             : isCorrect
-                            ? "border-green-500 bg-green-50"
-                            : "border-red-500 bg-red-50"
+                              ? "border-green-500 bg-green-50"
+                              : "border-red-500 bg-red-50"
                         }`}
                       >
                         <div className="flex items-start gap-2 mb-2">
