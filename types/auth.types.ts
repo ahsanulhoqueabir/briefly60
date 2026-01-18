@@ -28,6 +28,8 @@ export interface User {
   plan: Plan;
   rbac?: "superadmin" | "admin" | "editor" | "user";
   subscriptions?: Subscription[];
+  bookmarks?: Array<{ news: string }>;
+  quizzes?: string[];
 }
 
 export interface AuthState {
@@ -46,4 +48,5 @@ export interface AuthContextType extends AuthState {
   signOut: () => Promise<void>;
   clearError: () => void;
   isAuthenticated: boolean;
+  refreshUser: () => Promise<void>;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import usePrivateAxios from "@/hooks/use-private-axios";
 import { MCQ } from "@/types/news.types";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
@@ -8,13 +9,21 @@ interface QuizModalProps {
   isOpen: boolean;
   onClose: () => void;
   mcqs: MCQ[];
+  newsId: string;
 }
 
-export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
+export default function QuizModal({
+  isOpen,
+  onClose,
+  mcqs,
+  newsId,
+}: QuizModalProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const axios = usePrivateAxios();
 
   if (!isOpen) return null;
 
@@ -28,6 +37,42 @@ export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
     setSelectedOption(option);
   };
 
+  const submitQuizResults = async (answers: string[]) => {
+    try {
+      setIsSubmitting(true);
+
+      // Prepare attempted items
+      const attemptedItems = answers.map((answer, index) => ({
+        question_index: index.toString(),
+        is_correct: answer === parsedMcqs[index].correct_answer,
+      }));
+
+      // Calculate right answers
+      const rightAnswers = attemptedItems.filter(
+        (item) => item.is_correct
+      ).length;
+
+      // Prepare payload
+      const payload = {
+        news: newsId,
+        attempted: [
+          {
+            right_answers: rightAnswers,
+            attempted: attemptedItems,
+            total_question: parsedMcqs.length,
+          },
+        ],
+      };
+
+      // Submit to API
+      await axios.post("/api/quiz", payload);
+    } catch (error) {
+      console.error("Failed to submit quiz:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNext = () => {
     if (selectedOption === null) return;
 
@@ -36,6 +81,22 @@ export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
 
     if (isLastQuestion) {
       setShowResults(true);
+      // Submit quiz results
+      submitQuizResults(newAnswers);
+    } else {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedOption(null);
+    }
+  };
+
+  const handleSkip = () => {
+    const newAnswers = [...selectedAnswers, ""];
+    setSelectedAnswers(newAnswers);
+
+    if (isLastQuestion) {
+      setShowResults(true);
+      // Submit quiz results
+      submitQuizResults(newAnswers);
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedOption(null);
@@ -145,13 +206,26 @@ export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
               </div>
 
               {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={selectedOption === null}
-                className="w-full py-3 px-6 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLastQuestion ? "সম্পন্ন করুন" : "পরবর্তী"}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 px-6 bg-secondary text-secondary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  এড়িয়ে যান
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={selectedOption === null || isSubmitting}
+                  className="flex-1 py-3 px-6 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting
+                    ? "জমা দেওয়া হচ্ছে..."
+                    : isLastQuestion
+                    ? "সম্পন্ন করুন"
+                    : "পরবর্তী"}
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -192,19 +266,25 @@ export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
                 <div className="space-y-4 text-left mb-6">
                   {parsedMcqs.map((mcq, index) => {
                     const userAnswer = selectedAnswers[index];
-                    const isCorrect = userAnswer === mcq.correct_answer;
+                    const isSkipped = !userAnswer || userAnswer === "";
+                    const isCorrect =
+                      !isSkipped && userAnswer === mcq.correct_answer;
 
                     return (
                       <div
                         key={index}
                         className={`p-4 rounded-lg border-2 ${
-                          isCorrect
+                          isSkipped
+                            ? "border-gray-400 bg-gray-50"
+                            : isCorrect
                             ? "border-green-500 bg-green-50"
                             : "border-red-500 bg-red-50"
                         }`}
                       >
                         <div className="flex items-start gap-2 mb-2">
-                          {isCorrect ? (
+                          {isSkipped ? (
+                            <XCircle className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+                          ) : isCorrect ? (
                             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                           ) : (
                             <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
@@ -213,10 +293,18 @@ export default function QuizModal({ isOpen, onClose, mcqs }: QuizModalProps) {
                             <p className="text-sm font-medium text-primary">
                               প্রশ্ন {index + 1}: {mcq.question}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              আপনার উত্তর:{" "}
-                              <span className="font-medium">{userAnswer}</span>
-                            </p>
+                            {isSkipped ? (
+                              <p className="text-xs text-gray-600 mt-1">
+                                এই প্রশ্নটি এড়িয়ে যাওয়া হয়েছে
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                আপনার উত্তর:{" "}
+                                <span className="font-medium">
+                                  {userAnswer}
+                                </span>
+                              </p>
+                            )}
                             {!isCorrect && (
                               <p className="text-xs text-green-700 mt-1">
                                 সঠিক উত্তর:{" "}

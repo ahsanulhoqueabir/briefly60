@@ -63,7 +63,7 @@ export class AuthService {
   static async getUserbyId(userId: string) {
     try {
       const res = await directusApi.get(
-        `/users/${userId}?fields=id,email,first_name,image,plan,subscriptions.*,rbac`
+        `/users/${userId}?fields=id,email,first_name,image,plan,subscriptions.*,rbac,bookmarks.news,quizzes`
       );
       const user = res.data?.data;
       return {

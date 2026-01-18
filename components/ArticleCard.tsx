@@ -19,6 +19,8 @@ import SoundWave from "./SoundWave";
 import AuthRequired from "./AuthRequired";
 import QuizModal from "./QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
+import usePrivateAxios from "@/hooks/use-private-axios";
+import { useBookmark } from "@/hooks/useBookmark";
 
 interface ArticleCardProps {
   article: Article;
@@ -35,11 +37,13 @@ const validUrl = (url: string): boolean => {
 };
 
 export default function ArticleCard({ article, id }: ArticleCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const axios = usePrivateAxios();
+  const { isBookmarked } = useBookmark(article.id);
 
   // Text-to-Speech hook for the summary
   const {
@@ -59,9 +63,27 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
     pitch: 1,
   });
 
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // TODO: Implement bookmark functionality
+  const handleBookmark = async () => {
+    if (isBookmarkLoading) return;
+
+    setIsBookmarkLoading(true);
+    try {
+      const response = await axios.post("/api/bookmark", {
+        news: article.id,
+      });
+
+      if (response.data.success) {
+        await refreshUser();
+      }
+    } catch (error: any) {
+      console.error("Error handling bookmark:", error);
+      alert(
+        error?.response?.data?.message ||
+          "বুকমার্ক প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+      );
+    } finally {
+      setIsBookmarkLoading(false);
+    }
   };
 
   const handleQuizClick = () => {
@@ -271,10 +293,13 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
               <AuthRequired referenceId={id || `article-${article.id}`}>
                 <button
                   onClick={handleBookmark}
+                  disabled={isBookmarkLoading}
                   className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
                     isBookmarked
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:opacity-90"
+                  } ${
+                    isBookmarkLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
                 >
@@ -315,6 +340,7 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
           isOpen={showQuizModal}
           onClose={handleQuizClose}
           mcqs={article.mcqs}
+          newsId={article.id}
         />
       )}
     </article>
