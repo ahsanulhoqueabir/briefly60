@@ -25,18 +25,28 @@ export class NewsService {
     "banner",
     "published_at",
     "quiz_questions",
+    "createdAt",
+    "updatedAt",
   ];
 
   /**
    * Convert string _id to string for response
    */
   private static formatArticle(article: IArticle): ArticleType {
+    const articleObj = article.toObject();
     return {
-      ...article.toObject(),
+      ...articleObj,
       _id: article._id.toString(),
-      published_at: article.published_at.toISOString(),
-      createdAt: article.createdAt.toISOString(),
-      updatedAt: article.updatedAt.toISOString(),
+      published_at:
+        article.published_at?.toISOString() || new Date().toISOString(),
+      createdAt:
+        article.createdAt?.toISOString() ||
+        articleObj.createdAt ||
+        new Date().toISOString(),
+      updatedAt:
+        article.updatedAt?.toISOString() ||
+        articleObj.updatedAt ||
+        new Date().toISOString(),
     };
   }
 
@@ -118,7 +128,15 @@ export class NewsService {
   /**
    * Build sort parameter for MongoDB
    */
-  private static buildSort(params: ArticleQueryParams): Record<string, number> {
+  private static buildSort(
+    params: ArticleQueryParams,
+    hasTextSearch: boolean = false,
+  ): Record<string, number> {
+    // If text search is active and no custom sort, sort by text score for relevance
+    if (hasTextSearch && !params.sort_by) {
+      return { score: { $meta: "textScore" }, published_at: -1 };
+    }
+
     if (!params.sort_by) {
       return { published_at: -1 }; // Default: latest first
     }
@@ -153,15 +171,21 @@ export class NewsService {
           : (page - 1) * limit;
 
       const filter = this.buildFilter(defaultParams);
-      const sort = this.buildSort(defaultParams);
+      const hasTextSearch = !!defaultParams.search;
+      const sort = this.buildSort(defaultParams, hasTextSearch);
       const fields = defaultParams.fields || this.DEFAULT_FIELDS;
 
       // Create the query builder
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query: any = Article.find(filter);
 
-      // Apply field selection if specified
-      if (fields && fields.length > 0) {
+      // Add text score projection if text search is active
+      if (hasTextSearch) {
+        query = query.select({
+          ...query._fields,
+          score: { $meta: "textScore" },
+        });
+      } else if (fields && fields.length > 0) {
         query = query.select(fields.join(" "));
       }
 
