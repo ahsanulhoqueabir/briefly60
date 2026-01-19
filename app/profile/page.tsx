@@ -1,12 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserIcon, Mail, Calendar } from "lucide-react";
+import { UserIcon, Mail, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ProfileEditForm } from "@/components/ProfileEditForm";
 
 const ProfilePage: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
+  const [is_editing, set_is_editing] = useState(false);
 
   if (loading) {
     return (
@@ -37,13 +40,40 @@ const ProfilePage: React.FC = () => {
     return initial || "U";
   };
 
+  const handle_edit_success = async () => {
+    set_is_editing(false);
+    // Refresh user data after successful update
+    if (refreshUser) {
+      await refreshUser();
+    }
+  };
+
+  // Show edit form if editing
+  if (is_editing) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <ProfileEditForm
+          user={user}
+          onSuccess={handle_edit_success}
+          onCancel={() => set_is_editing(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground mt-2">
-          View and manage your account information.
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="text-muted-foreground mt-2">
+            View and manage your account information.
+          </p>
+        </div>
+        <Button onClick={() => set_is_editing(true)} className="gap-2">
+          <Edit className="h-4 w-4" />
+          Edit Profile
+        </Button>
       </div>
 
       <div className="grid gap-6">
@@ -53,18 +83,20 @@ const ProfilePage: React.FC = () => {
             {user.image ? (
               <Image
                 src={user.image}
-                alt={user.first_name}
+                alt={user.first_name || user.name}
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
               <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-medium">
-                {getUserInitials(user.first_name)}
+                {getUserInitials(user.first_name || user.name)}
               </div>
             )}
             <div>
-              <h2 className="text-2xl font-semibold">{user.first_name}</h2>
+              <h2 className="text-2xl font-semibold">
+                {user.first_name || user.name}
+              </h2>
               <p className="text-muted-foreground">Welcome to Briefly60!</p>
             </div>
           </div>
@@ -74,7 +106,9 @@ const ProfilePage: React.FC = () => {
               <UserIcon className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Name</p>
-                <p className="text-muted-foreground">{user.first_name}</p>
+                <p className="text-muted-foreground">
+                  {user.first_name || user.name}
+                </p>
               </div>
             </div>
 

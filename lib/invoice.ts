@@ -1,6 +1,9 @@
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-constants";
+import { UserSubscriptionStatus } from "@/types/subscription.types";
 
-export async function generateInvoicePDF(subscription_status: any) {
+export async function generateInvoicePDF(
+  subscription_status: UserSubscriptionStatus,
+) {
   if (!subscription_status?.subscription) {
     throw new Error("No subscription data available");
   }
@@ -11,10 +14,10 @@ export async function generateInvoicePDF(subscription_status: any) {
   const doc = new jsPDF();
 
   // Brand colors (converted from oklch to RGB approximations)
-  const primaryColor = [33, 128, 141]; // #21808d (Teal)
-  const secondaryColor = [238, 64, 35]; // #ee4023 (Orange-Red)
-  const lightGray = [248, 250, 252];
-  const darkGray = [51, 65, 85];
+  const primaryColor: [number, number, number] = [33, 128, 141]; // #21808d (Teal)
+  const secondaryColor: [number, number, number] = [238, 64, 35]; // #ee4023 (Orange-Red)
+  const lightGray: [number, number, number] = [248, 250, 252];
+  const darkGray: [number, number, number] = [51, 65, 85];
 
   const invoiceId = `INV-${Date.now().toString().slice(-8)}`;
   const planObj = SUBSCRIPTION_PLANS.find(
@@ -25,11 +28,11 @@ export async function generateInvoicePDF(subscription_status: any) {
     planObj?.name ||
     subscription_status.subscription?.plan ||
     "Subscription";
-  const price =
-    planObj?.price ?? subscription_status.subscription?.amount ?? "N/A";
+  const price = planObj?.price ?? 0;
   const startDate = subscription_status.subscription?.start_date
-    ? new Date(
-        subscription_status.subscription.start_date,
+    ? (subscription_status.subscription.start_date instanceof Date
+        ? subscription_status.subscription.start_date
+        : new Date(subscription_status.subscription.start_date)
       ).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -41,10 +44,14 @@ export async function generateInvoicePDF(subscription_status: any) {
         day: "numeric",
       });
   const endDate = subscription_status.subscription?.end_date
-    ? new Date(subscription_status.subscription.end_date).toLocaleDateString(
-        "en-US",
-        { year: "numeric", month: "short", day: "numeric" },
-      )
+    ? (subscription_status.subscription.end_date instanceof Date
+        ? subscription_status.subscription.end_date
+        : new Date(subscription_status.subscription.end_date)
+      ).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
     : "-";
   const issueDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -56,25 +63,34 @@ export async function generateInvoicePDF(subscription_status: any) {
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, 210, 45, "F");
 
-  // Logo: "Briefly" + "60"
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(28);
-  doc.setFont("helvetica", "bold");
-  doc.text("Briefly", 20, 25);
-
-  // "60" box with secondary color
-  doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-  doc.roundedRect(62, 15, 18, 12, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("60", 65, 24);
-
-  // "INVOICE" text
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("SUBSCRIPTION INVOICE", 20, 37);
+  // Add logo image
+  try {
+    // Note: In production, you should convert logo.png to base64 and embed it
+    // For now, we'll use a fallback text logo if image fails
+    const logoPath =
+      typeof window !== "undefined" ? "/logo.png" : "public/logo.png";
+    const logoImg = new Image();
+    logoImg.src = logoPath;
+    await new Promise<void>((resolve, reject) => {
+      logoImg.onload = () => {
+        doc.addImage(logoImg, "PNG", 20, 12, 60, 30);
+        resolve();
+      };
+      logoImg.onerror = () => reject(new Error("Logo failed to load"));
+      // Timeout after 2 seconds
+      setTimeout(() => reject(new Error("Logo load timeout")), 2000);
+    });
+  } catch {
+    // Fallback to text logo if image fails
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("Briefly", 20, 25);
+    doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    doc.roundedRect(58, 15, 16, 10, 2, 2, "F");
+    doc.setFontSize(18);
+    doc.text("60", 60, 23);
+  }
 
   // Invoice details in header
   doc.setFontSize(9);
@@ -110,7 +126,7 @@ export async function generateInvoicePDF(subscription_status: any) {
       [
         `${planName} Plan\nSubscription Period`,
         `${startDate}\nto\n${endDate}`,
-        `৳${price}`,
+        `${price} Taka`,
       ],
     ],
     theme: "grid",
@@ -137,7 +153,10 @@ export async function generateInvoicePDF(subscription_status: any) {
   });
 
   // Total section with colored background
-  const finalY = (doc as any).lastAutoTable.finalY || yPos + 30;
+  const docWithAutoTable = doc as typeof doc & {
+    lastAutoTable?: { finalY: number };
+  };
+  const finalY = docWithAutoTable.lastAutoTable?.finalY || yPos + 30;
   doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
   doc.rect(130, finalY + 5, 60, 12, "F");
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
@@ -146,7 +165,7 @@ export async function generateInvoicePDF(subscription_status: any) {
   doc.text("Total Amount:", 135, finalY + 13);
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.setFontSize(14);
-  doc.text(`৳${price}`, 182, finalY + 13, { align: "right" });
+  doc.text(`${price} Taka`, 182, finalY + 13, { align: "right" });
 
   // Additional info table
   autoTable(doc, {
@@ -154,7 +173,9 @@ export async function generateInvoicePDF(subscription_status: any) {
     head: [["Subscription Details"]],
     body: [
       ["Payment Method: SSLCommerz"],
-      [`Days Remaining: ${subscription_status.subscription?.days_remaining ?? 0} days`],
+      [
+        `Days Remaining: ${subscription_status.subscription?.days_remaining ?? 0} days`,
+      ],
       ["Payment Status: Confirmed"],
     ],
     theme: "plain",

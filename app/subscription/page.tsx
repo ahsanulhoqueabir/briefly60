@@ -268,7 +268,7 @@ function SubscriptionContent() {
       )}
 
       {/* Payment Error */}
-      {payment_error && (
+      {payment_error && !subscription_status?.has_active_subscription && (
         <Alert variant="destructive" className="mb-8">
           <XCircle className="h-4 w-4" />
           <AlertTitle>Payment Issue</AlertTitle>
@@ -276,156 +276,160 @@ function SubscriptionContent() {
         </Alert>
       )}
 
-      {/* Subscription Plans */}
-      <div className="grid md:grid-cols-3 gap-8">
-        {SUBSCRIPTION_PLANS.map((plan) => (
-          <Card
-            key={plan.id}
-            className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-              plan.popular
-                ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
-                : "hover:border-primary/50"
-            }`}
-          >
-            {plan.popular && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
-                  ⭐ Most Popular
-                </Badge>
-              </div>
-            )}
+      {/* Subscription Plans - Only show if no active subscription */}
+      {!subscription_status?.has_active_subscription && (
+        <div className="grid md:grid-cols-3 gap-8">
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <Card
+              key={plan.id}
+              className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                plan.popular
+                  ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
+                  : "hover:border-primary/50"
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
+                    ⭐ Most Popular
+                  </Badge>
+                </div>
+              )}
 
-            <CardHeader className="pb-8">
-              <CardTitle className="text-2xl font-bold">
-                {plan.name_en}
-              </CardTitle>
-              <div className="mt-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                    ৳{plan.price}
-                  </span>
-                  {plan.original_price && (
-                    <span className="text-xl line-through text-muted-foreground">
-                      ৳{plan.original_price}
+              <CardHeader className="pb-8">
+                <CardTitle className="text-2xl font-bold">
+                  {plan.name_en}
+                </CardTitle>
+                <div className="mt-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                      ৳{plan.price}
                     </span>
+                    {plan.original_price && (
+                      <span className="text-xl line-through text-muted-foreground">
+                        ৳{plan.original_price}
+                      </span>
+                    )}
+                  </div>
+                  {plan.savings && (
+                    <Badge
+                      variant="secondary"
+                      className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                    >
+                      💰 {plan.savings}
+                    </Badge>
                   )}
                 </div>
-                {plan.savings && (
-                  <Badge
-                    variant="secondary"
-                    className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                  >
-                    💰 {plan.savings}
-                  </Badge>
-                )}
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  {plan.features_en?.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+                      </div>
+                      <span className="text-sm leading-relaxed">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Valid for {plan.duration_months}{" "}
+                  {plan.duration_months === 1 ? "month" : "months"}
+                </div>
+              </CardContent>
+
+              <CardFooter className="pt-6">
+                <Button
+                  className={`w-full transition-all ${
+                    plan.popular
+                      ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
+                      : ""
+                  }`}
+                  size="lg"
+                  variant={plan.popular ? "default" : "outline"}
+                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={
+                    payment_loading ||
+                    subscription_status?.has_active_subscription ||
+                    selected_plan === plan.id
+                  }
+                >
+                  {payment_loading && selected_plan === plan.id ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Processing...
+                    </>
+                  ) : subscription_status?.has_active_subscription ? (
+                    "Subscribed"
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Subscribe Now
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Additional Info - Only show if no active subscription */}
+      {!subscription_status?.has_active_subscription && (
+        <div className="mt-16 text-center">
+          <Card className="max-w-3xl mx-auto border-2 shadow-lg">
+            <CardHeader className="pb-6">
+              <div className="flex items-center justify-center mb-2">
+                <CreditCard className="w-6 h-6 text-primary mr-2" />
+                <CardTitle className="text-2xl">Payment Information</CardTitle>
               </div>
             </CardHeader>
-
-            <CardContent className="space-y-6">
-              <ul className="space-y-3">
-                {plan.features_en?.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
-                    </div>
-                    <span className="text-sm leading-relaxed">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
-                <Calendar className="w-4 h-4 mr-2" />
-                Valid for {plan.duration_months}{" "}
-                {plan.duration_months === 1 ? "month" : "months"}
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4 text-left">
+                <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Secure Payment</p>
+                    <p className="text-sm text-muted-foreground">
+                      All payments are securely processed through SSLCommerz
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Multiple Options</p>
+                    <p className="text-sm text-muted-foreground">
+                      Credit card, debit card, and mobile banking supported
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">No Auto-Renewal</p>
+                    <p className="text-sm text-muted-foreground">
+                      Subscription won&apos;t auto-renew after expiration
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Support Available</p>
+                    <p className="text-sm text-muted-foreground">
+                      Contact us for any issues or questions
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
-
-            <CardFooter className="pt-6">
-              <Button
-                className={`w-full transition-all ${
-                  plan.popular
-                    ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
-                    : ""
-                }`}
-                size="lg"
-                variant={plan.popular ? "default" : "outline"}
-                onClick={() => handleSubscribe(plan.id)}
-                disabled={
-                  payment_loading ||
-                  subscription_status?.has_active_subscription ||
-                  selected_plan === plan.id
-                }
-              >
-                {payment_loading && selected_plan === plan.id ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Processing...
-                  </>
-                ) : subscription_status?.has_active_subscription ? (
-                  "Subscribed"
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Subscribe Now
-                  </>
-                )}
-              </Button>
-            </CardFooter>
           </Card>
-        ))}
-      </div>
-
-      {/* Additional Info */}
-      <div className="mt-16 text-center">
-        <Card className="max-w-3xl mx-auto border-2 shadow-lg">
-          <CardHeader className="pb-6">
-            <div className="flex items-center justify-center mb-2">
-              <CreditCard className="w-6 h-6 text-primary mr-2" />
-              <CardTitle className="text-2xl">Payment Information</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4 text-left">
-              <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
-                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Secure Payment</p>
-                  <p className="text-sm text-muted-foreground">
-                    All payments are securely processed through SSLCommerz
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
-                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Multiple Options</p>
-                  <p className="text-sm text-muted-foreground">
-                    Credit card, debit card, and mobile banking supported
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
-                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">No Auto-Renewal</p>
-                  <p className="text-sm text-muted-foreground">
-                    Subscription won&apos;t auto-renew after expiration
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3 p-4 rounded-lg bg-muted/50">
-                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Support Available</p>
-                  <p className="text-sm text-muted-foreground">
-                    Contact us for any issues or questions
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

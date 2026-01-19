@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, User, LogIn } from "lucide-react";
+import { Home, Search, User, LogIn, Bookmark, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,6 +22,20 @@ const MobileBottomNav: React.FC = () => {
       href: "/discover",
       icon: Search,
     },
+    ...(isAuthenticated
+      ? [
+          {
+            label: "Saved",
+            href: "/bookmarks",
+            icon: Bookmark,
+          },
+          {
+            label: "Quizzes",
+            href: "/quiz-history",
+            icon: Brain,
+          },
+        ]
+      : []),
     {
       label: isAuthenticated ? "Profile" : "Login",
       href: isAuthenticated ? "/profile" : "/auth/login",
@@ -45,20 +59,20 @@ const MobileBottomNav: React.FC = () => {
                   "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200 min-w-[70px]",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-md scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                 )}
               >
                 <Icon
                   className={cn(
                     "transition-all duration-200",
-                    isActive ? "size-6" : "size-5"
+                    isActive ? "size-6" : "size-5",
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 <span
                   className={cn(
                     "text-xs font-medium transition-all duration-200",
-                    isActive ? "font-semibold" : "font-normal"
+                    isActive ? "font-semibold" : "font-normal",
                   )}
                 >
                   {item.label}
