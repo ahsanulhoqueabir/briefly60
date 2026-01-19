@@ -1,13 +1,14 @@
-import directusApi from "@/lib/directus";
+import dbConnect from "@/lib/mongodb";
+import Article, { IArticle } from "@/models/Article.model";
 import type { AnalyticsData } from "@/types/analytics.types";
 
 interface ArticleAnalytics {
-  id: string;
+  _id: string;
   clickbait_score: number;
   clickbait_reason: string;
   category: string;
   importance: number;
-  date_created: string;
+  createdAt: string;
   published_at: string;
   source_name: string;
 }
@@ -15,31 +16,29 @@ interface ArticleAnalytics {
 export const analyticsService = {
   async getAnalyticsData(): Promise<AnalyticsData> {
     try {
+      await dbConnect();
+
       // Fetch all published articles
-      const response = await directusApi.get("/items/b60_articles", {
-        params: {
-          filter: JSON.stringify({ status: { _eq: "published" } }),
-          fields: [
-            "id",
+      const articles: IArticle[] = await Article.find({ status: "published" })
+        .select(
+          [
+            "_id",
             "clickbait_score",
             "clickbait_reason",
             "category",
             "importance",
-            "date_created",
+            "createdAt",
             "published_at",
             "source_name",
-          ].join(","),
-          limit: -1,
-        },
-      });
-
-      const articles: ArticleAnalytics[] = response.data.data;
+          ].join(" "),
+        )
+        .exec();
 
       const now = new Date();
       const todayStart = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate()
+        now.getDate(),
       );
       const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -48,30 +47,30 @@ export const analyticsService = {
       const totalArticles = articles.length;
       const avgClickbaitScore =
         articles.reduce(
-          (sum: number, a: ArticleAnalytics) => sum + (a.clickbait_score || 0),
-          0
+          (sum: number, a: IArticle) => sum + (a.clickbait_score || 0),
+          0,
         ) / totalArticles || 0;
       const highClickbaitCount = articles.filter(
-        (a: ArticleAnalytics) => (a.clickbait_score || 0) >= 7
+        (a: IArticle) => (a.clickbait_score || 0) >= 7,
       ).length;
       const lowClickbaitCount = articles.filter(
-        (a: ArticleAnalytics) => (a.clickbait_score || 0) <= 3
+        (a: IArticle) => (a.clickbait_score || 0) <= 3,
       ).length;
       const categoriesCount = new Set(
-        articles.map((a: ArticleAnalytics) => a.category).filter(Boolean)
+        articles.map((a: IArticle) => a.category).filter(Boolean),
       ).size;
 
       const publishedToday = articles.filter(
-        (a: ArticleAnalytics) =>
-          a.published_at && new Date(a.published_at) >= todayStart
+        (a: IArticle) =>
+          a.published_at && new Date(a.published_at) >= todayStart,
       ).length;
       const publishedThisWeek = articles.filter(
-        (a: ArticleAnalytics) =>
-          a.published_at && new Date(a.published_at) >= weekStart
+        (a: IArticle) =>
+          a.published_at && new Date(a.published_at) >= weekStart,
       ).length;
       const publishedThisMonth = articles.filter(
-        (a: ArticleAnalytics) =>
-          a.published_at && new Date(a.published_at) >= monthStart
+        (a: IArticle) =>
+          a.published_at && new Date(a.published_at) >= monthStart,
       ).length;
 
       // Clickbait distribution (0-3, 4-6, 7-10)
@@ -83,9 +82,9 @@ export const analyticsService = {
 
       const clickbaitDistribution = clickbaitRanges.map((range) => {
         const count = articles.filter(
-          (a: ArticleAnalytics) =>
+          (a: IArticle) =>
             (a.clickbait_score || 0) >= range.min &&
-            (a.clickbait_score || 0) <= range.max
+            (a.clickbait_score || 0) <= range.max,
         ).length;
         return {
           score: range.min,
@@ -95,8 +94,8 @@ export const analyticsService = {
       });
 
       // Category distribution
-      const categoryMap = new Map<string, ArticleAnalytics[]>();
-      articles.forEach((a: ArticleAnalytics) => {
+      const categoryMap = new Map<string, IArticle[]>();
+      articles.forEach((a: IArticle) => {
         const cat = a.category || "Uncategorized";
         if (!categoryMap.has(cat)) {
           categoryMap.set(cat, []);
@@ -126,7 +125,7 @@ export const analyticsService = {
         trendsMap.set(date, { scores: [], count: 0 });
       });
 
-      articles.forEach((a: ArticleAnalytics) => {
+      articles.forEach((a: IArticle) => {
         if (a.published_at) {
           const date = new Date(a.published_at).toISOString().split("T")[0];
           if (trendsMap.has(date)) {
@@ -145,12 +144,12 @@ export const analyticsService = {
               ? data.scores.reduce((a, b) => a + b, 0) / data.scores.length
               : 0,
           count: data.count,
-        })
+        }),
       );
 
       // Top clickbait reasons
       const reasonsMap = new Map<string, { scores: number[]; count: number }>();
-      articles.forEach((a: ArticleAnalytics) => {
+      articles.forEach((a: IArticle) => {
         if (a.clickbait_reason && a.clickbait_reason.trim()) {
           const reason = a.clickbait_reason.slice(0, 100); // Limit length
           if (!reasonsMap.has(reason)) {
@@ -173,7 +172,7 @@ export const analyticsService = {
 
       // Importance distribution
       const importanceMap = new Map<number, number>();
-      articles.forEach((a: ArticleAnalytics) => {
+      articles.forEach((a: IArticle) => {
         const importance = a.importance || 0;
         importanceMap.set(importance, (importanceMap.get(importance) || 0) + 1);
       });
@@ -192,7 +191,7 @@ export const analyticsService = {
         hourlyMap.set(i, 0);
       }
 
-      articles.forEach((a: ArticleAnalytics) => {
+      articles.forEach((a: IArticle) => {
         if (a.published_at) {
           const hour = new Date(a.published_at).getHours();
           hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
@@ -203,7 +202,7 @@ export const analyticsService = {
         ([hour, count]) => ({
           hour,
           count,
-        })
+        }),
       );
 
       // Source distribution
@@ -212,7 +211,7 @@ export const analyticsService = {
         { count: number; scores: number[]; highClickbait: number }
       >();
 
-      articles.forEach((a: ArticleAnalytics) => {
+      articles.forEach((a: IArticle) => {
         const source = a.source_name || "Unknown";
         if (!sourceMap.has(source)) {
           sourceMap.set(source, { count: 0, scores: [], highClickbait: 0 });

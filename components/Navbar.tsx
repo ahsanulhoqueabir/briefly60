@@ -58,7 +58,7 @@ const Navbar: React.FC = () => {
                     "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-inter",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      : "text-muted-foreground hover:text-background hover:bg-accent",
                   )}
                 >
                   <Icon className="size-4" />

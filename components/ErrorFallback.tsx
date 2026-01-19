@@ -71,7 +71,7 @@ export const CompactErrorFallback: React.FC<ErrorFallbackProps> = ({
   return (
     <div className="flex items-center justify-center p-4 bg-destructive/10 rounded-lg border border-destructive/20">
       <div className="flex items-center gap-3">
-        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+        <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium text-destructive">{title}</p>
           {error?.message && (

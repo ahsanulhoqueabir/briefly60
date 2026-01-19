@@ -6,6 +6,7 @@ import { uploadDocumentFromBase64 } from "@/services/cloudinary.services";
 
 /**
  * GET /api/dashboard/articles - Get all articles with filters and pagination
+ * Searches database directly with provided filters
  * Requires: admin or superadmin role
  */
 export const GET = withAdmin(async (request: NextRequest) => {
@@ -16,10 +17,11 @@ export const GET = withAdmin(async (request: NextRequest) => {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
 
-    // Parse filters
+    // Parse filters - these will be used to query MongoDB
     const filters: AdminArticleFilters = {};
 
     if (searchParams.get("status")) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       filters.status = searchParams.get("status") as any;
     }
     if (searchParams.get("category")) {
@@ -28,6 +30,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
     if (searchParams.get("source_name")) {
       filters.source_name = searchParams.get("source_name") as string;
     }
+    // Search query - searches in title, content, and corrected_title fields
     if (searchParams.get("search")) {
       filters.search = searchParams.get("search") as string;
     }
@@ -44,16 +47,14 @@ export const GET = withAdmin(async (request: NextRequest) => {
       filters.importance_max = parseInt(searchParams.get("importance_max")!);
     }
 
+    // Fetch articles from database with filters
     const response = await AdminArticleService.getArticles(
       filters,
       page,
-      limit
+      limit,
     );
 
-    return NextResponse.json({
-      success: true,
-      ...response,
-    });
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching articles:", error);
     return NextResponse.json(
@@ -62,7 +63,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
         message: "Failed to fetch articles",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });
@@ -81,7 +82,7 @@ export const POST = withAdmin(async (request: NextRequest) => {
           success: false,
           message: "Missing required fields: title, content, category",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +92,7 @@ export const POST = withAdmin(async (request: NextRequest) => {
         const imageUrl = await uploadDocumentFromBase64(
           body.bannerBase64,
           "articles",
-          body.bannerFileName || `article_${Date.now()}`
+          body.bannerFileName || `article_${Date.now()}`,
         );
         body.banner = imageUrl;
       } catch (error) {
@@ -101,7 +102,7 @@ export const POST = withAdmin(async (request: NextRequest) => {
             success: false,
             message: "Failed to upload image",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
       // Remove base64 data before saving to DB
@@ -124,7 +125,7 @@ export const POST = withAdmin(async (request: NextRequest) => {
         message: "Failed to create article",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });

@@ -23,3 +23,13 @@ export const baseurl =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const mongodb = process.env.MONGODB_URI!;
+
+export const sslcommerzConfig = {
+  storeId: process.env.SSLCOMMERZ_STORE_ID!,
+  storePassword: process.env.SSLCOMMERZ_STORE_PASSWORD!,
+  isLive: process.env.SSLCOMMERZ_IS_LIVE === "true",
+  successUrl: `${baseurl}/api/subscription/sslcommerz/success`,
+  failUrl: `${baseurl}/api/subscription/sslcommerz/fail`,
+  cancelUrl: `${baseurl}/api/subscription/sslcommerz/cancel`,
+  ipnUrl: `${baseurl}/api/subscription/sslcommerz/ipn`,
+};

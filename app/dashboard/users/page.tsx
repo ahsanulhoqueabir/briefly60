@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AdminUser, AdminUserFilters, UserStatus } from "@/types/admin.types";
+import { UserRole } from "@/types/auth.types";
 import { DataTable } from "@/components/admin/DataTable";
 import { Pagination } from "@/components/admin/Pagination";
 import { ConfirmModal } from "@/components/admin/ConfirmModal";
+import { RoleManagementModal } from "@/components/admin/RoleManagementModal";
 import { toast, ToastContainer } from "@/components/admin/Toast";
 import {
   Select,
@@ -14,6 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import usePrivateAxios from "@/hooks/use-private-axios";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRoleAccess } from "@/hooks/use-role-access";
+import { useRouter } from "next/navigation";
+import { Edit } from "lucide-react";
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -28,24 +34,37 @@ export default function UsersManagementPage() {
     isOpen: boolean;
     user: AdminUser | null;
   }>({ isOpen: false, user: null });
+  const [roleManagementModal, setRoleManagementModal] = useState<{
+    isOpen: boolean;
+    user: AdminUser | null;
+  }>({ isOpen: false, user: null });
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     action: "delete" | "ban" | "activate" | null;
     userId: string | null;
   }>({ isOpen: false, action: null, userId: null });
   const axios = usePrivateAxios();
+  const { user: currentUser } = useAuth();
+  const { hasPermission, isSuperAdmin } = useRoleAccess();
+  const router = useRouter();
+  const canViewUsers = hasPermission("view_users");
 
   const limit = 20;
 
+  // Check permissions on mount
   useEffect(() => {
-    loadUsers();
-  }, [page, filters]);
+    if (!canViewUsers) {
+      router.push("/dashboard");
+      toast.error("You don't have permission to view users");
+    }
+  }, [canViewUsers, router]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
 
       // Build query params
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const params: any = {
         page: page.toString(),
         limit: limit.toString(),
@@ -71,74 +90,105 @@ export default function UsersManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filters, axios]);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const handleSearch = useCallback(() => {
     setFilters({ ...filters, search: searchTerm });
     setPage(1);
-  };
+  }, [filters, searchTerm]);
 
-  const handleUserAction = async (
-    action: "delete" | "ban" | "activate",
-    userId: string
-  ) => {
-    try {
-      if (action === "delete") {
-        await axios.delete(`/api/dashboard/users/${userId}`);
-        toast.success("User deleted successfully");
-      } else {
-        const status = action === "ban" ? "banned" : "active";
-        await axios.patch(`/api/dashboard/users/${userId}`, { status });
-        toast.success(`User ${action}d successfully`);
+  const handleUserAction = useCallback(
+    async (action: "delete" | "ban" | "activate", userId: string) => {
+      try {
+        if (action === "delete") {
+          await axios.delete(`/api/dashboard/users/${userId}`);
+          toast.success("User deleted successfully");
+        } else {
+          const status = action === "ban" ? "banned" : "active";
+          await axios.patch(`/api/dashboard/users/${userId}`, { status });
+          toast.success(`User ${action}d successfully`);
+        }
+
+        loadUsers();
+      } catch (error) {
+        console.error(`Failed to ${action} user:`, error);
+        toast.error(`Failed to ${action} user`);
       }
+    },
+    [axios, loadUsers],
+  );
 
-      loadUsers();
-    } catch (error) {
-      console.error(`Failed to ${action} user:`, error);
-      toast.error(`Failed to ${action} user`);
-    }
-  };
+  const handleBulkAction = useCallback(
+    async (action: "activate" | "ban" | "delete") => {
+      try {
+        const ids = Array.from(selectedRows);
+        const response = await axios.post("/api/dashboard/users/bulk", {
+          ids,
+          action,
+        });
 
-  const handleBulkAction = async (action: "activate" | "ban" | "delete") => {
-    try {
-      const ids = Array.from(selectedRows);
-      const response = await axios.post("/api/dashboard/users/bulk", {
-        ids,
-        action,
-      });
+        toast.success(
+          `${response.data.data.success} users updated successfully${
+            response.data.data.failed > 0
+              ? `, ${response.data.data.failed} failed`
+              : ""
+          }`,
+        );
+        setSelectedRows(new Set());
+        loadUsers();
+      } catch (error) {
+        console.error("Failed to bulk action:", error);
+        toast.error("Failed to perform bulk action");
+      }
+    },
+    [selectedRows, axios, loadUsers],
+  );
 
-      toast.success(
-        `${response.data.data.success} users updated successfully${
-          response.data.data.failed > 0
-            ? `, ${response.data.data.failed} failed`
-            : ""
-        }`
-      );
-      setSelectedRows(new Set());
-      loadUsers();
-    } catch (error) {
-      console.error("Failed to bulk action:", error);
-      toast.error("Failed to perform bulk action");
-    }
-  };
+  const handleUpdateRole = useCallback(
+    async (userId: string, newRole: UserRole) => {
+      try {
+        await axios.patch(`/api/dashboard/users/${userId}`, { role: newRole });
+        toast.success("User role updated successfully");
+        loadUsers();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        console.error("Failed to update role:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to update user role";
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    [axios, loadUsers],
+  );
 
-  const handleRowSelect = (id: string) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
-  };
+  const handleRowSelect = useCallback(
+    (id: string) => {
+      const newSelected = new Set(selectedRows);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedRows(newSelected);
+    },
+    [selectedRows],
+  );
 
-  const handleSelectAll = (selected: boolean) => {
-    if (selected) {
-      setSelectedRows(new Set(users.map((u) => u.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
+  const handleSelectAll = useCallback(
+    (selected: boolean) => {
+      if (selected) {
+        setSelectedRows(new Set(users.map((u) => u.id)));
+      } else {
+        setSelectedRows(new Set());
+      }
+    },
+    [users],
+  );
 
   const columns = [
     {
@@ -165,8 +215,8 @@ export default function UsersManagementPage() {
             user.plan === "pro"
               ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
               : user.plan === "enterprise"
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
           }`}
         >
           {user.plan || "free"}
@@ -182,8 +232,8 @@ export default function UsersManagementPage() {
             user.status === "active"
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
               : user.status === "banned"
-              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
           }`}
         >
           {user.status}
@@ -203,7 +253,33 @@ export default function UsersManagementPage() {
       key: "role",
       label: "RBAC (Role)",
       render: (user: AdminUser) => (
-        <span className="text-sm capitalize">{user.rbac || "-"}</span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium capitalize ${
+              user.rbac === "superadmin"
+                ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                : user.rbac === "admin"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  : user.rbac === "editor"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+            }`}
+          >
+            {user.rbac || "user"}
+          </span>
+          {hasPermission("change_user_role") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setRoleManagementModal({ isOpen: true, user });
+              }}
+              className="text-xs text-primary hover:text-primary/80 underline"
+              title="Manage Role"
+            >
+              <Edit className="size-4" />
+            </button>
+          )}
+        </div>
       ),
     },
     {
@@ -211,8 +287,10 @@ export default function UsersManagementPage() {
       label: "Last Updated",
       render: (user: AdminUser) => (
         <span className="text-sm">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {(user as any).date_updated
-            ? new Date((user as any).date_updated).toLocaleDateString()
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              new Date((user as any).date_updated).toLocaleDateString()
             : "-"}
         </span>
       ),
@@ -231,48 +309,54 @@ export default function UsersManagementPage() {
           >
             View
           </button>
-          {user.status !== "active" ? (
+          {hasPermission("edit_user") && (
+            <>
+              {user.status !== "active" ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmModal({
+                      isOpen: true,
+                      action: "activate",
+                      userId: user.id,
+                    });
+                  }}
+                  className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                >
+                  Activate
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmModal({
+                      isOpen: true,
+                      action: "ban",
+                      userId: user.id,
+                    });
+                  }}
+                  className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                >
+                  Ban
+                </button>
+              )}
+            </>
+          )}
+          {hasPermission("delete_user") && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setConfirmModal({
                   isOpen: true,
-                  action: "activate",
+                  action: "delete",
                   userId: user.id,
                 });
               }}
-              className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
-              Activate
-            </button>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmModal({
-                  isOpen: true,
-                  action: "ban",
-                  userId: user.id,
-                });
-              }}
-              className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-            >
-              Ban
+              Delete
             </button>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmModal({
-                isOpen: true,
-                action: "delete",
-                userId: user.id,
-              });
-            }}
-            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-          >
-            Delete
-          </button>
         </div>
       ),
     },
@@ -304,11 +388,11 @@ export default function UsersManagementPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 h-10 px-4 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all"
               />
               <button
                 onClick={handleSearch}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                className="h-10 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
               >
                 Search
               </button>
@@ -325,7 +409,7 @@ export default function UsersManagementPage() {
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full py-5">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -349,7 +433,7 @@ export default function UsersManagementPage() {
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full py-5">
               <SelectValue placeholder="All Plans" />
             </SelectTrigger>
             <SelectContent>
@@ -363,7 +447,7 @@ export default function UsersManagementPage() {
       </div>
 
       {/* Bulk Actions */}
-      {selectedRows.size > 0 && (
+      {selectedRows.size > 0 && hasPermission("edit_user") && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl animate-in slide-in-from-bottom-5 duration-300">
           <div className="bg-card/95 backdrop-blur-md rounded-2xl border-2 border-primary shadow-2xl p-4 md:p-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -386,12 +470,14 @@ export default function UsersManagementPage() {
                 >
                   Ban
                 </button>
-                <button
-                  onClick={() => handleBulkAction("delete")}
-                  className="flex-1 sm:flex-none px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-sm hover:shadow flex items-center gap-2 justify-center"
-                >
-                  Delete
-                </button>
+                {hasPermission("delete_user") && (
+                  <button
+                    onClick={() => handleBulkAction("delete")}
+                    className="flex-1 sm:flex-none px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-sm hover:shadow flex items-center gap-2 justify-center"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -479,7 +565,7 @@ export default function UsersManagementPage() {
                   <p className="text-sm text-muted-foreground">Registered</p>
                   <p className="font-medium">
                     {new Date(
-                      userDetailsModal.user.date_created
+                      userDetailsModal.user.date_created,
                     ).toLocaleDateString()}
                   </p>
                 </div>
@@ -488,7 +574,7 @@ export default function UsersManagementPage() {
                   <p className="font-medium">
                     {userDetailsModal.user.last_login
                       ? new Date(
-                          userDetailsModal.user.last_login
+                          userDetailsModal.user.last_login,
                         ).toLocaleDateString()
                       : "Never"}
                   </p>
@@ -529,6 +615,15 @@ export default function UsersManagementPage() {
         </div>
       )}
 
+      {/* Role Management Modal */}
+      <RoleManagementModal
+        isOpen={roleManagementModal.isOpen}
+        user={roleManagementModal.user}
+        currentUserRole={currentUser?.rbac}
+        onClose={() => setRoleManagementModal({ isOpen: false, user: null })}
+        onUpdateRole={handleUpdateRole}
+      />
+
       {/* Confirmation Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
@@ -544,8 +639,8 @@ export default function UsersManagementPage() {
           confirmModal.action === "delete"
             ? "Delete"
             : confirmModal.action === "ban"
-            ? "Ban"
-            : "Activate"
+              ? "Ban"
+              : "Activate"
         } User`}
         message={`Are you sure you want to ${confirmModal.action} this user?${
           confirmModal.action === "delete"
@@ -556,8 +651,8 @@ export default function UsersManagementPage() {
           confirmModal.action === "delete"
             ? "Delete"
             : confirmModal.action === "ban"
-            ? "Ban"
-            : "Activate"
+              ? "Ban"
+              : "Activate"
         }
         type={confirmModal.action === "delete" ? "danger" : "warning"}
       />

@@ -46,28 +46,34 @@ export default function ArticlesManagementPage() {
 
   const limit = 20;
 
+  /**
+   * Load articles from database with filters and pagination
+   * This function fetches fresh data from the database on every call
+   */
   const loadArticles = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Build query params
+      // Build query params for API call - searches database directly
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
 
+      // Add search and filter params - these are sent to backend for DB query
       if (filters.search) params.append("search", filters.search);
       if (filters.status) params.append("status", filters.status);
       if (filters.category) params.append("category", filters.category);
       if (filters.source_name)
         params.append("source_name", filters.source_name);
-      if (filters.date_from) params.append("dateFrom", filters.date_from);
-      if (filters.date_to) params.append("dateTo", filters.date_to);
+      if (filters.date_from) params.append("date_from", filters.date_from);
+      if (filters.date_to) params.append("date_to", filters.date_to);
       if (filters.importance_min !== undefined)
-        params.append("importanceMin", filters.importance_min.toString());
+        params.append("importance_min", filters.importance_min.toString());
       if (filters.importance_max !== undefined)
-        params.append("importanceMax", filters.importance_max.toString());
+        params.append("importance_max", filters.importance_max.toString());
 
+      // Fetch from database via API endpoint
       const response = await axios.get(
         `/api/dashboard/articles?${params.toString()}`,
       );
@@ -77,9 +83,11 @@ export default function ArticlesManagementPage() {
         setArticles(result.data);
         setTotalPages(result.meta?.totalPages || 1);
         setTotalItems(result.meta?.total || 0);
+      } else {
+        toast.error(result.error || "Failed to load articles");
       }
     } catch (error) {
-      console.error("Failed to load articles:", error);
+      console.error("Failed to load articles from database:", error);
       toast.error("Failed to load articles");
     } finally {
       setLoading(false);
@@ -90,9 +98,13 @@ export default function ArticlesManagementPage() {
     loadArticles();
   }, [loadArticles]);
 
+  /**
+   * Handle search input - updates filters which triggers loadArticles
+   * This will fetch fresh results from database with search query
+   */
   const handleSearch = () => {
-    setFilters({ ...filters, search: searchTerm });
-    setPage(1);
+    setFilters({ ...filters, search: searchTerm.trim() });
+    setPage(1); // Reset to first page for new search
   };
 
   const handleDelete = async (id: string) => {
@@ -267,7 +279,6 @@ export default function ArticlesManagementPage() {
             title="Edit article"
           >
             <Edit className="size-4" />
-            <span>Edit</span>
           </button>
           <button
             onClick={(e) => {
@@ -349,12 +360,12 @@ export default function ArticlesManagementPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="flex-1 min-w-0 px-4 py-2.5 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all"
+                className="flex-1 min-w-0 h-10 px-4 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all"
               />
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all font-medium shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="h-10 px-5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all font-medium shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <SearchIcon className="size-4" />
                 <span>Search</span>
@@ -375,7 +386,7 @@ export default function ArticlesManagementPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-full py-4">
+              <SelectTrigger className="w-full py-5">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -399,7 +410,7 @@ export default function ArticlesManagementPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-full py-2.5">
+              <SelectTrigger className="w-full py-5">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>

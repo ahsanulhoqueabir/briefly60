@@ -10,6 +10,8 @@ export interface SignUpPayload extends LoginPayload {
 
 export type Plan = "free" | "pro" | "enterprise";
 
+export type UserRole = "superadmin" | "admin" | "editor" | "user";
+
 export interface Subscription {
   id: string;
   plan: Plan;
@@ -26,7 +28,7 @@ export interface User {
   first_name: string;
   image?: string;
   plan: Plan;
-  rbac?: "superadmin" | "admin" | "editor" | "user";
+  rbac?: UserRole;
   subscriptions?: Subscription[];
   bookmarkedNewsIds?: string[]; // Array of news IDs that the user has bookmarked
   quizzes?: string[];

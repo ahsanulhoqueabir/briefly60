@@ -17,6 +17,7 @@ import {
   LogOut,
   BarChart3,
 } from "lucide-react";
+import { useRoleAccess } from "@/hooks/use-role-access";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -27,10 +28,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // Check if user has dashboard access (admin, superadmin, or editor)
-  const hasDashboardAccess =
-    user?.rbac && ["admin", "superadmin", "editor"].includes(user.rbac);
+  const { canAccessDashboard, hasPermission } = useRoleAccess();
+  const hasDashboardAccess = canAccessDashboard();
 
   useEffect(() => {
     if (!loading) {
@@ -43,7 +42,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         router.push("/");
       }
     }
-  }, [user, loading, isAuthenticated, hasDashboardAccess, router]);
+  }, [loading, isAuthenticated, hasDashboardAccess, router]);
 
   if (loading || !isAuthenticated || !hasDashboardAccess) {
     return (
@@ -119,34 +118,42 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             collapsed={!sidebarOpen}
             isActive={pathname === "/dashboard"}
           />
-          <NavLink
-            href="/dashboard/analytics"
-            label="Analytics"
-            icon={BarChart3}
-            collapsed={!sidebarOpen}
-            isActive={pathname.startsWith("/dashboard/analytics")}
-          />
-          <NavLink
-            href="/dashboard/articles"
-            label="Articles"
-            icon={FileText}
-            collapsed={!sidebarOpen}
-            isActive={pathname.startsWith("/dashboard/articles")}
-          />
-          <NavLink
-            href="/dashboard/users"
-            label="Users"
-            icon={Users}
-            collapsed={!sidebarOpen}
-            isActive={pathname.startsWith("/dashboard/users")}
-          />
-          <NavLink
-            href="/dashboard/categories"
-            label="Categories"
-            icon={FolderTree}
-            collapsed={!sidebarOpen}
-            isActive={pathname.startsWith("/dashboard/categories")}
-          />
+          {hasPermission("view_analytics") && (
+            <NavLink
+              href="/dashboard/analytics"
+              label="Analytics"
+              icon={BarChart3}
+              collapsed={!sidebarOpen}
+              isActive={pathname.startsWith("/dashboard/analytics")}
+            />
+          )}
+          {hasPermission("view_articles") && (
+            <NavLink
+              href="/dashboard/articles"
+              label="Articles"
+              icon={FileText}
+              collapsed={!sidebarOpen}
+              isActive={pathname.startsWith("/dashboard/articles")}
+            />
+          )}
+          {hasPermission("view_users") && (
+            <NavLink
+              href="/dashboard/users"
+              label="Users"
+              icon={Users}
+              collapsed={!sidebarOpen}
+              isActive={pathname.startsWith("/dashboard/users")}
+            />
+          )}
+          {hasPermission("view_categories") && (
+            <NavLink
+              href="/dashboard/categories"
+              label="Categories"
+              icon={FolderTree}
+              collapsed={!sidebarOpen}
+              isActive={pathname.startsWith("/dashboard/categories")}
+            />
+          )}
         </nav>
 
         {/* Footer Actions */}

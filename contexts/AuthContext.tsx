@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Helper function for error handling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAuthError = (error: any, context: string) => {
     console.error(`Auth error in ${context}:`, error);
 

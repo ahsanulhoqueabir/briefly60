@@ -14,6 +14,7 @@ interface AppError {
   type: "error" | "warning" | "info";
   timestamp: Date;
   context?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }
 
@@ -35,6 +36,7 @@ interface ErrorContextType {
   removeError: (id: string) => void;
   clearErrors: () => void;
   handleError: (error: Error | string, context?: string) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleApiError: (error: any, context?: string) => void;
 }
 
@@ -153,6 +155,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   );
 
   const handleApiError = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error: any, context?: string) => {
       let message = "An unexpected error occurred";
       let type: "error" | "warning" = "error";

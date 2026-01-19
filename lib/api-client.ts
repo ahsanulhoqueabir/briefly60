@@ -1,11 +1,12 @@
 // API base URL
 
 import { baseurl } from "@/config/env";
+import { LocalStorageService } from "@/services/localstorage.services";
 
 // Get token from localStorage
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("briefly60_auth_token");
+  return LocalStorageService.getAuthToken();
 }
 
 // Enhanced error class for better error handling
@@ -14,6 +15,7 @@ class ApiError extends Error {
     message: string,
     public status: number,
     public code?: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public details?: any,
   ) {
     super(message);
@@ -112,7 +114,7 @@ export async function apiClient<T>(
       if (response.status === 401) {
         // Clear token and redirect to login
         if (typeof window !== "undefined") {
-          localStorage.removeItem("briefly60_auth_token");
+          LocalStorageService.removeAuthToken();
           localStorage.removeItem("briefly60_user_data");
           window.location.href = "/auth/login";
         }

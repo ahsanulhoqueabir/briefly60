@@ -11,7 +11,7 @@ export const GET = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
@@ -22,7 +22,7 @@ export const GET = withAdmin(
             success: false,
             message: "User ID is required",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -34,7 +34,7 @@ export const GET = withAdmin(
             success: false,
             message: "User not found",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -50,21 +50,22 @@ export const GET = withAdmin(
           message: "Failed to fetch user",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );
 
 /**
  * PATCH /api/dashboard/users/[id] - Update user
  * Requires: admin or superadmin role
+ * Role updates require: superadmin role only
  */
 export const PATCH = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
@@ -76,8 +77,46 @@ export const PATCH = withAdmin(
             success: false,
             message: "User ID is required",
           },
-          { status: 400 }
+          { status: 400 },
         );
+      }
+
+      // Handle role update - Only superadmin can change roles
+      if (body.role || body.rbac) {
+        const newRole = body.role || body.rbac;
+        const validRoles = ["superadmin", "admin", "editor", "user"];
+
+        if (!validRoles.includes(newRole)) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+            },
+            { status: 400 },
+          );
+        }
+
+        const result = await AdminUserService.updateUserRole(
+          id,
+          newRole,
+          user.userId,
+        );
+
+        if (!result.success) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: result.error || "Failed to update user role",
+            },
+            { status: 403 },
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `User role updated to ${newRole}`,
+          data: result.data,
+        });
       }
 
       // Handle status update
@@ -88,10 +127,10 @@ export const PATCH = withAdmin(
             {
               success: false,
               message: `Invalid status. Must be one of: ${validStatuses.join(
-                ", "
+                ", ",
               )}`,
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -109,7 +148,7 @@ export const PATCH = withAdmin(
           success: false,
           message: "No valid update fields provided",
         },
-        { status: 400 }
+        { status: 400 },
       );
     } catch (error) {
       console.error("Error updating user:", error);
@@ -119,10 +158,10 @@ export const PATCH = withAdmin(
           message: "Failed to update user",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );
 
 /**
@@ -133,7 +172,7 @@ export const DELETE = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
@@ -144,7 +183,7 @@ export const DELETE = withAdmin(
             success: false,
             message: "User ID is required",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -162,8 +201,8 @@ export const DELETE = withAdmin(
           message: "Failed to delete user",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );

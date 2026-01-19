@@ -104,7 +104,8 @@ export function DataTable<T>({
                 <td key={column.key} className="p-3 text-sm text-foreground">
                   {column.render
                     ? column.render(item)
-                    : (item as any)[column.key]}
+                    : /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                      (item as any)[column.key]}
                 </td>
               ))}
             </tr>
