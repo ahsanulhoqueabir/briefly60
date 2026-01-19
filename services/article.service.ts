@@ -100,15 +100,13 @@ export class ArticleService {
 
       return {
         success: true,
-        data: {
-          articles,
-          pagination: {
-            current_page: page,
-            total_pages: Math.ceil(total / limit),
-            total_items: total,
-            items_per_page: limit,
-            has_more: total > skip + limit,
-          },
+        data: articles,
+        pagination: {
+          current_page: page,
+          total_pages: Math.ceil(total / limit),
+          total_items: total,
+          items_per_page: limit,
+          has_more: total > skip + limit,
         },
       };
     } catch (error) {
