@@ -137,9 +137,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         return;
       }
       if (isLogin) {
-        await signInWithEmail({ ...data, turnstileToken } as LoginFormData);
+        const loginData = data as LoginFormData;
+        await signInWithEmail({
+          email: loginData.email,
+          password: loginData.password,
+          turnstileToken,
+        });
       } else {
-        await signUpWithEmail({ ...data, turnstileToken } as SignUpFormData);
+        const signupData = data as SignUpFormData;
+        await signUpWithEmail({
+          name: signupData.name,
+          email: signupData.email,
+          password: signupData.password,
+          confirm_password: signupData.confirm_password,
+          turnstileToken,
+        });
       }
 
       resetTurnstile();
