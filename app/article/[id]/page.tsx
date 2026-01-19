@@ -20,6 +20,7 @@ import { useBookmark } from "@/hooks/useBookmark";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import SubscriptionRequired from "@/components/SubscriptionRequired";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -302,7 +303,7 @@ export default function ArticleDetailPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {user && (
+            <SubscriptionRequired>
               <button
                 onClick={handleBookmark}
                 disabled={is_bookmark_loading}
@@ -317,7 +318,7 @@ export default function ArticleDetailPage() {
                   fill={isBookmarked ? "currentColor" : "none"}
                 />
               </button>
-            )}
+            </SubscriptionRequired>
             <button
               onClick={handleShare}
               className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"

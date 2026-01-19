@@ -19,6 +19,7 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import SoundWave from "./SoundWave";
 import AuthRequired from "./AuthRequired";
+import SubscriptionRequired from "./SubscriptionRequired";
 import QuizModal from "./QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
 import usePrivateAxios from "@/hooks/use-private-axios";
@@ -73,14 +74,6 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   const handleBookmark = async () => {
     if (isBookmarkLoading) return;
 
-    // Check for premium subscription
-    if (!has_premium) {
-      alert(
-        "বুকমার্ক করার জন্য আপনার একটি পেইড সাবস্ক্রিপশন প্রয়োজন। অনুগ্রহ করে সাবস্ক্রাইব করুন।",
-      );
-      return;
-    }
-
     setIsBookmarkLoading(true);
 
     const success = await handleAsyncError(async () => {
@@ -104,14 +97,6 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   };
 
   const handleQuizClick = () => {
-    // This will only be called if user is authenticated (due to AuthRequired wrapper)
-    // Check for premium subscription
-    if (!has_premium) {
-      alert(
-        "কুইজে অংশগ্রহণের জন্য আপনার একটি পেইড সাবস্ক্রিপশন প্রয়োজন। অনুগ্রহ করে সাবস্ক্রাইব করুন।",
-      );
-      return;
-    }
     setShowQuizModal(true);
   };
 
@@ -306,45 +291,40 @@ function ArticleCard({ article, id }: ArticleCardProps) {
 
               {/* Quiz Button (only if MCQs exist) */}
               {article.quiz_questions && article.quiz_questions.length > 0 && (
-                <AuthRequired referenceId={id || `article-${article._id}`}>
+                <SubscriptionRequired
+                  referenceId={id || `article-${article._id}`}
+                >
                   <button
                     onClick={handleQuizClick}
-                    disabled={!has_premium}
-                    className={`flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded transition-opacity ${
-                      !has_premium
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:opacity-90"
-                    }`}
+                    className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
                     aria-label="Take quiz"
-                    title={!has_premium ? "পেইড সাবস্ক্রিপশন প্রয়োজন" : ""}
                   >
                     <HelpCircle className="w-4 h-4" />
                   </button>
-                </AuthRequired>
+                </SubscriptionRequired>
               )}
 
               {/* Bookmark Button */}
-              <AuthRequired referenceId={id || `article-${article._id}`}>
+              <SubscriptionRequired
+                referenceId={id || `article-${article._id}`}
+              >
                 <button
                   onClick={handleBookmark}
-                  disabled={isBookmarkLoading || !has_premium}
+                  disabled={isBookmarkLoading}
                   className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
                     isBookmarked
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:opacity-90"
                   } ${
-                    isBookmarkLoading || !has_premium
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
+                    isBookmarkLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-                  title={!has_premium ? "পেইড সাবস্ক্রিপশন প্রয়োজন" : ""}
                 >
                   <Bookmark
                     className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
                   />
                 </button>
-              </AuthRequired>
+              </SubscriptionRequired>
 
               {/* Share Button */}
               <button
