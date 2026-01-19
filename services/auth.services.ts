@@ -344,4 +344,45 @@ export class AuthService {
       };
     }
   }
+
+  /**
+   * Update user's language preference
+   */
+  static async updateLanguagePreference(userId: string, language: "bn" | "en") {
+    try {
+      await dbConnect();
+
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return {
+          success: false,
+          error: "User not found",
+        };
+      }
+
+      // Update language preference
+      user.preferences = {
+        ...user.preferences,
+        language,
+      };
+
+      await user.save();
+
+      return {
+        success: true,
+        message: "Language preference updated successfully",
+        language,
+      };
+    } catch (error) {
+      console.error("Update language preference error:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update language preference",
+      };
+    }
+  }
 }

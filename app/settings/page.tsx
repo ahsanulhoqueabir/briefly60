@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -19,9 +19,12 @@ import { UserPreferences } from "@/types";
 import { cn } from "@/lib/utils";
 import SettingSection from "@/components/SettingSection";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const SettingsPage = () => {
   const { theme, setTheme } = useTheme();
+  const { user, updateLanguagePreference } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>({
     preferred_categories: ["politics", "technology"],
     language: "en",
@@ -39,6 +42,17 @@ const SettingsPage = () => {
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLanguageUpdating, setIsLanguageUpdating] = useState(false);
+
+  // Initialize language from user preferences
+  useEffect(() => {
+    if (user?.preferences?.language) {
+      setPreferences((prev) => ({
+        ...prev,
+        language: user.preferences!.language as "en" | "bn",
+      }));
+    }
+  }, [user]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -49,10 +63,50 @@ const SettingsPage = () => {
     setIsLoading(false);
   };
 
+  const handleLanguageChange = async (language: "bn" | "en") => {
+    if (isLanguageUpdating) return;
+
+    setIsLanguageUpdating(true);
+
+    // Optimistically update UI
+    setPreferences((prev) => ({
+      ...prev,
+      language,
+    }));
+
+    try {
+      const result = await updateLanguagePreference(language);
+
+      if (result.success) {
+        toast.success(
+          language === "bn"
+            ? "ভাষা পছন্দ সফলভাবে আপডেট করা হয়েছে"
+            : "Language preference updated successfully",
+        );
+      } else {
+        throw new Error(result.error || "Failed to update language");
+      }
+    } catch (error) {
+      // Revert on error
+      setPreferences((prev) => ({
+        ...prev,
+        language: user?.preferences?.language === "bn" ? "bn" : "en",
+      }));
+      toast.error(
+        language === "bn"
+          ? "Failed to update language preference"
+          : "ভাষা পছন্দ আপডেট করতে ব্যর্থ",
+      );
+      console.error("Language update error:", error);
+    } finally {
+      setIsLanguageUpdating(false);
+    }
+  };
+
   const updatePreferences = (
     section: keyof UserPreferences,
     key: string,
-    value: boolean | string
+    value: boolean | string,
   ) => {
     setPreferences((prev) => ({
       ...prev,
@@ -103,7 +157,7 @@ const SettingsPage = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {NEWS_CATEGORIES.map((category) => {
                   const isSelected = preferences.preferred_categories.includes(
-                    category.id
+                    category.id,
                   );
                   return (
                     <button
@@ -113,7 +167,7 @@ const SettingsPage = () => {
                         "p-3 rounded-lg border text-left transition-all",
                         isSelected
                           ? "border-blue-300 bg-blue-50 text-blue-700"
-                          : "border-gray-200 bg-white hover:bg-gray-50"
+                          : "border-gray-200 bg-white hover:bg-gray-50",
                       )}
                     >
                       <div className="font-medium text-sm">{category.name}</div>
@@ -153,7 +207,7 @@ const SettingsPage = () => {
                         updatePreferences(
                           "notification_settings",
                           "email",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -170,7 +224,7 @@ const SettingsPage = () => {
                         updatePreferences(
                           "notification_settings",
                           "push",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -195,7 +249,7 @@ const SettingsPage = () => {
                         updatePreferences(
                           "notification_settings",
                           "trending_news",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -212,7 +266,7 @@ const SettingsPage = () => {
                         updatePreferences(
                           "notification_settings",
                           "breaking_news",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -243,14 +297,14 @@ const SettingsPage = () => {
                         updatePreferences(
                           "reading_preferences",
                           "font_size",
-                          size
+                          size,
                         )
                       }
                       className={cn(
                         "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                         preferences.reading_preferences.font_size === size
                           ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200",
                       )}
                     >
                       {size.charAt(0).toUpperCase() + size.slice(1)}
@@ -275,7 +329,7 @@ const SettingsPage = () => {
                           "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
                           theme === "light"
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50 text-muted-foreground"
+                            : "border-border hover:border-primary/50 text-muted-foreground",
                         )}
                       >
                         <Sun className="w-5 h-5 mr-2" />
@@ -287,7 +341,7 @@ const SettingsPage = () => {
                           "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
                           theme === "dark"
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50 text-muted-foreground"
+                            : "border-border hover:border-primary/50 text-muted-foreground",
                         )}
                       >
                         <Moon className="w-5 h-5 mr-2" />
@@ -296,7 +350,7 @@ const SettingsPage = () => {
                       <button
                         onClick={() => {
                           const systemTheme = window.matchMedia(
-                            "(prefers-color-scheme: dark)"
+                            "(prefers-color-scheme: dark)",
                           ).matches
                             ? "dark"
                             : "light";
@@ -304,7 +358,7 @@ const SettingsPage = () => {
                         }}
                         className={cn(
                           "flex items-center justify-center p-3 rounded-lg border-2 transition-all",
-                          "border-border hover:border-primary/50 text-muted-foreground"
+                          "border-border hover:border-primary/50 text-muted-foreground",
                         )}
                       >
                         <Monitor className="w-5 h-5 mr-2" />
@@ -323,7 +377,7 @@ const SettingsPage = () => {
                         updatePreferences(
                           "reading_preferences",
                           "autoplay_videos",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -346,21 +400,45 @@ const SettingsPage = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">
-                  Interface Language
+                  Content Language
                 </h4>
-                <select
-                  value={preferences.language}
-                  onChange={(e) =>
-                    setPreferences((prev) => ({
-                      ...prev,
-                      language: e.target.value as "en" | "bn",
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="en">English</option>
-                  <option value="bn">বাংলা (Bengali)</option>
-                </select>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Choose your preferred language for news articles. This will
+                  apply to all articles across the app.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleLanguageChange("bn")}
+                    disabled={isLanguageUpdating}
+                    className={cn(
+                      "flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-all",
+                      preferences.language === "bn"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50 text-muted-foreground",
+                      isLanguageUpdating && "opacity-50 cursor-not-allowed",
+                    )}
+                  >
+                    বাংলা (Bengali)
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("en")}
+                    disabled={isLanguageUpdating}
+                    className={cn(
+                      "flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-all",
+                      preferences.language === "en"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50 text-muted-foreground",
+                      isLanguageUpdating && "opacity-50 cursor-not-allowed",
+                    )}
+                  >
+                    English
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {preferences.language === "bn"
+                    ? "নিবন্ধগুলি বাংলায় প্রদর্শিত হবে"
+                    : "Articles will be displayed in English"}
+                </p>
               </div>
             </div>
           </SettingSection>
@@ -411,7 +489,7 @@ const SettingsPage = () => {
               disabled={isLoading}
               className={cn(
                 "flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors",
-                isLoading && "opacity-50 cursor-not-allowed"
+                isLoading && "opacity-50 cursor-not-allowed",
               )}
             >
               {isLoading ? (

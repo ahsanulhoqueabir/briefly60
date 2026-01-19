@@ -74,4 +74,7 @@ export interface AuthContextType extends AuthState {
     password: string,
     confirmPassword: string,
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
+  updateLanguagePreference: (
+    language: "bn" | "en",
+  ) => Promise<{ success: boolean; message?: string; error?: string }>;
 }
