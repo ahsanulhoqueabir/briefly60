@@ -83,20 +83,18 @@ const ProfilePage: React.FC = () => {
             {user.image ? (
               <Image
                 src={user.image}
-                alt={user.first_name || user.name}
+                alt={user.first_name}
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
               <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-medium">
-                {getUserInitials(user.first_name || user.name)}
+                {getUserInitials(user.first_name)}
               </div>
             )}
             <div>
-              <h2 className="text-2xl font-semibold">
-                {user.first_name || user.name}
-              </h2>
+              <h2 className="text-2xl font-semibold">{user.first_name}</h2>
               <p className="text-muted-foreground">Welcome to Briefly60!</p>
             </div>
           </div>
@@ -106,9 +104,7 @@ const ProfilePage: React.FC = () => {
               <UserIcon className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Name</p>
-                <p className="text-muted-foreground">
-                  {user.first_name || user.name}
-                </p>
+                <p className="text-muted-foreground">{user.first_name}</p>
               </div>
             </div>
 

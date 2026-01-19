@@ -99,7 +99,7 @@ export const PATCH = withAdmin(
         const result = await AdminUserService.updateUserRole(
           id,
           newRole,
-          user.userId,
+          user.id,
         );
 
         if (!result.success) {

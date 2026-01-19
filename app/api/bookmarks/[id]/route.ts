@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authResult = await authMiddleware(request);
@@ -17,7 +17,8 @@ export async function DELETE(
       return authResult.response!;
     }
 
-    const result = await BookmarkService.deleteBookmark(params.id);
+    const { id } = await params;
+    const result = await BookmarkService.deleteBookmark(id);
 
     if (!result.success) {
       return NextResponse.json(

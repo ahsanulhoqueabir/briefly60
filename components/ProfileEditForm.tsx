@@ -17,19 +17,10 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { UpdateProfilePayload } from "@/types/profile.types";
 import { useProfile } from "@/hooks/use-profile";
+import { User } from "@/types/auth.types";
 
 interface ProfileEditFormProps {
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-    image?: string;
-    preferences?: {
-      language?: string;
-      notifications?: boolean;
-      theme?: "light" | "dark";
-    };
-  };
+  user: User;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -42,11 +33,11 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   const { update_profile, loading: updating } = useProfile();
 
   const [form_data, set_form_data] = useState({
-    name: user.name || "",
+    name: user.first_name || "",
     image: user.image || "",
-    notifications: user.preferences?.notifications ?? true,
-    theme: user.preferences?.theme || "light",
-    language: user.preferences?.language || "en",
+    notifications: true,
+    theme: "light" as "light" | "dark",
+    language: "en",
   });
 
   const [image_preview, set_image_preview] = useState<string | null>(
