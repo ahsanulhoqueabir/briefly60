@@ -9,6 +9,8 @@ export interface IUser extends Document {
   name: string;
   image?: string;
   rbac: UserRole;
+  reset_password_token?: string;
+  reset_password_expires?: Date;
   preferences?: {
     language?: string;
     notifications?: boolean;
@@ -50,6 +52,14 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["superadmin", "admin", "editor", "user"],
       default: "user",
+    },
+    reset_password_token: {
+      type: String,
+      select: false, // Don't return by default
+    },
+    reset_password_expires: {
+      type: Date,
+      select: false, // Don't return by default
     },
     preferences: {
       language: {

@@ -246,6 +246,102 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState((prev) => ({ ...prev, error: {} }));
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
+
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      setAuthState((prev) => ({ ...prev, loading: false }));
+
+      if (!response.ok || !result.success) {
+        return {
+          success: false,
+          error: result.error || "Failed to send reset email",
+        };
+      }
+
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send reset email";
+      setAuthState((prev) => ({
+        ...prev,
+        loading: false,
+        error: {
+          details: message,
+        },
+      }));
+      return {
+        success: false,
+        error: message,
+      };
+    }
+  };
+
+  const resetPassword = async (
+    token: string,
+    password: string,
+    confirmPassword: string,
+  ) => {
+    try {
+      setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
+
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          password,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      setAuthState((prev) => ({ ...prev, loading: false }));
+
+      if (!response.ok || !result.success) {
+        return {
+          success: false,
+          error: result.error || "Failed to reset password",
+        };
+      }
+
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to reset password";
+      setAuthState((prev) => ({
+        ...prev,
+        loading: false,
+        error: {
+          details: message,
+        },
+      }));
+      return {
+        success: false,
+        error: message,
+      };
+    }
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     signInWithEmail,
@@ -254,6 +350,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     clearError,
     isAuthenticated,
     refreshUser,
+    forgotPassword,
+    resetPassword,
   };
 
   return (

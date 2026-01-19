@@ -80,7 +80,7 @@ export default function SubscriptionRequired({
     const returnUrl = queryString ? `${currentUrl}?${queryString}` : currentUrl;
 
     // Navigate to login with return URL
-    router.push(`/auth/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+    router.push(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`);
   };
 
   const handleSubscriptionRedirect = () => {

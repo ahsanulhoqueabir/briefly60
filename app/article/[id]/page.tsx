@@ -409,7 +409,7 @@ export default function ArticleDetailPage() {
                   কুইজে অংশ নিতে অনুগ্রহ করে লগইন করুন
                 </p>
                 <Link
-                  href="/auth/signin"
+                  href="/auth/login"
                   className="inline-block w-full md:w-auto px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-center"
                 >
                   লগইন করুন

@@ -103,7 +103,7 @@ export default function FilterModal({
 
   const clickbaitRange = [
     parseInt(filters.clickbait_min) || 1,
-    parseInt(filters.clickbait_max) || 5,
+    parseInt(filters.clickbait_max) || 10,
   ];
 
   return (
@@ -141,7 +141,7 @@ export default function FilterModal({
                 </label>
                 <div className="flex gap-2">
                   <Select
-                    value={filters.source_name || undefined}
+                    value={filters.source_name || ""}
                     onValueChange={(value) =>
                       onFilterChange("source_name", value)
                     }
@@ -150,6 +150,7 @@ export default function FilterModal({
                       <SelectValue placeholder="All Newspapers" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">All Newspapers</SelectItem>
                       {NEWS_SOURCES.map((source) => (
                         <SelectItem key={source.value} value={source.value}>
                           {source.label}
@@ -176,13 +177,14 @@ export default function FilterModal({
                 </label>
                 <div className="flex gap-2">
                   <Select
-                    value={filters.category || undefined}
+                    value={filters.category || ""}
                     onValueChange={(value) => onFilterChange("category", value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">All Categories</SelectItem>
                       {CATEGORIES.map((cat) => (
                         <SelectItem key={cat.value} value={cat.value}>
                           {cat.label}
@@ -247,7 +249,7 @@ export default function FilterModal({
                       onSelect={(date) =>
                         onFilterChange(
                           "published_after",
-                          date ? format(date, "yyyy-MM-dd") : ""
+                          date ? format(date, "yyyy-MM-dd") : "",
                         )
                       }
                       initialFocus
@@ -277,7 +279,7 @@ export default function FilterModal({
                       onSelect={(date) =>
                         onFilterChange(
                           "published_before",
-                          date ? format(date, "yyyy-MM-dd") : ""
+                          date ? format(date, "yyyy-MM-dd") : "",
                         )
                       }
                       initialFocus
@@ -316,7 +318,7 @@ export default function FilterModal({
               </label>
               <Slider
                 min={1}
-                max={5}
+                max={10}
                 step={1}
                 value={clickbaitRange}
                 onValueChange={(values) => {
@@ -327,7 +329,7 @@ export default function FilterModal({
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>1 (Less Clickbait)</span>
-                <span>5 (More Clickbait)</span>
+                <span>10 (More Clickbait)</span>
               </div>
             </div>
 

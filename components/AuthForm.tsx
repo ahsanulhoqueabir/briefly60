@@ -15,6 +15,8 @@ import {
   SignUpFormData,
   calculatePasswordStrength,
 } from "@/lib/validation";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
+import ResetPasswordModal from "@/components/ResetPasswordModal";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -33,6 +35,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     strength: "weak" | "medium" | "strong" | "very-strong";
     score: number;
   } | null>(null);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
   const isLogin = mode === "login";
 
@@ -54,6 +59,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     clearError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Check for reset token in URL
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      setResetToken(token);
+      setIsResetPasswordOpen(true);
+    }
+  }, [searchParams]);
 
   // Monitor password strength for sign up
   useEffect(() => {
@@ -434,15 +448,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               </div>
             )}
 
-            {/* Forgot Password Link (Login only) */}
+            {/* Forgot Password Button (Login only) */}
             {isLogin && (
               <div className="flex justify-end -mt-2">
-                <Link
-                  href="/auth/forgot-password"
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPasswordOpen(true)}
                   className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
                   Forgot your password?
-                </Link>
+                </button>
               </div>
             )}
 
@@ -504,6 +519,28 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           )}
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+      />
+
+      {/* Reset Password Modal */}
+      {resetToken && (
+        <ResetPasswordModal
+          isOpen={isResetPasswordOpen}
+          onClose={() => {
+            setIsResetPasswordOpen(false);
+            setResetToken(null);
+            // Remove token from URL
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete("token");
+            window.history.replaceState({}, "", newUrl.toString());
+          }}
+          token={resetToken}
+        />
+      )}
     </div>
   );
 };

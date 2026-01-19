@@ -74,21 +74,22 @@ export default function AuthRequired({
     setShowDialog(false);
   };
 
+  // If loading, show fallback or loading state (DON'T render children)
+  if (loading) {
+    return <>{fallback || null}</>;
+  }
+
   // If user is authenticated, render children normally
   if (user) {
     return <>{children}</>;
   }
 
-  // If loading, show fallback or children (disabled state)
-  if (loading) {
-    return <>{fallback || children}</>;
-  }
-
-  // User is not authenticated - wrap with click handler
+  // User is not authenticated - show fallback or placeholder
+  // DON'T render children to prevent API requests
   return (
     <>
       <div onClick={handleClick} className="contents">
-        {children}
+        {fallback || children}
       </div>
 
       {/* Authentication Required Dialog */}

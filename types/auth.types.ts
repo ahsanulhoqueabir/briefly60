@@ -8,6 +8,16 @@ export interface SignUpPayload extends LoginPayload {
   confirm_password: string;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  password: string;
+  confirm_password: string;
+}
+
 export type Plan = "free" | "pro" | "enterprise";
 
 export type UserRole = "superadmin" | "admin" | "editor" | "user";
@@ -56,4 +66,12 @@ export interface AuthContextType extends AuthState {
   clearError: () => void;
   isAuthenticated: boolean;
   refreshUser: () => Promise<void>;
+  forgotPassword: (
+    email: string,
+  ) => Promise<{ success: boolean; message?: string; error?: string }>;
+  resetPassword: (
+    token: string,
+    password: string,
+    confirmPassword: string,
+  ) => Promise<{ success: boolean; message?: string; error?: string }>;
 }
