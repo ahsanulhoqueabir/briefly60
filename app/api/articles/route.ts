@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
  * - source: string
  * - importance: low | medium | high | breaking
  * - search: string (searches in title, description, content)
+ * - type: latest | important (important = last 3 days sorted by importance)
  * - page: number (default: 1)
  * - limit: number (default: 20)
  */
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
         | undefined,
       search: searchParams.get("search") || undefined,
       status: searchParams.get("status") || "published",
+      type: searchParams.get("type") as "latest" | "important" | undefined,
     };
 
     const result = await ArticleService.getArticles(options);

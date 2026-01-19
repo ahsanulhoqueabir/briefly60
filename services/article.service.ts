@@ -38,6 +38,7 @@ export class ArticleService {
     importance?: "low" | "medium" | "high" | "breaking";
     search?: string;
     status?: string;
+    type?: "latest" | "important";
   }) {
     try {
       await connectDB();
@@ -50,6 +51,7 @@ export class ArticleService {
         importance,
         search,
         status = "published",
+        type,
       } = options;
 
       const skip = (page - 1) * limit;
@@ -68,12 +70,30 @@ export class ArticleService {
         ];
       }
 
-      // Get articles
-      const articles = await Article.find(query)
-        .sort({ published_at: -1 })
+      // For important news type: filter last 3 days
+      if (type === "important") {
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        query.published_at = { $gte: threeDaysAgo };
+      }
+
+      // Get articles with appropriate sorting
+      let articlesQuery = Article.find(query)
         .limit(limit)
         .skip(skip)
         .select("-__v");
+
+      // Sort by importance (descending) for important type, otherwise by date
+      if (type === "important") {
+        articlesQuery = articlesQuery.sort({
+          importance: -1,
+          published_at: -1,
+        });
+      } else {
+        articlesQuery = articlesQuery.sort({ published_at: -1 });
+      }
+
+      const articles = await articlesQuery;
 
       const total = await Article.countDocuments(query);
 

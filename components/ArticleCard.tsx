@@ -13,6 +13,7 @@ import {
   Volume2,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import SoundWave from "./SoundWave";
@@ -171,22 +172,26 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
   return (
     <article className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
       {/* Banner Image */}
-      <div className="relative w-full h-48 bg-muted shrink-0">
-        <Image
-          src={imageSrc}
-          alt={article.title}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImageError(true)}
-        />
-      </div>
+      <Link href={`/article/${article._id}`}>
+        <div className="relative w-full h-48 bg-muted shrink-0 cursor-pointer">
+          <Image
+            src={imageSrc}
+            alt={article.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageError(true)}
+          />
+        </div>
+      </Link>
 
       <div className="p-4 flex flex-col grow">
         {/* Title */}
-        <h2 className="text-lg font-bold text-primary mb-2 ">
-          {article.title}
-        </h2>
+        <Link href={`/article/${article._id}`}>
+          <h2 className="text-lg font-bold text-primary mb-2 hover:underline cursor-pointer">
+            {article.title}
+          </h2>
+        </Link>
 
         {/* Corrected Title (if clickbait score > 3) */}
         {showCorrectedTitle && (
