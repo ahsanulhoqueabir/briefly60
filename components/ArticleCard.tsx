@@ -14,17 +14,15 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import SoundWave from "./SoundWave";
-import AuthRequired from "./AuthRequired";
 import SubscriptionRequired from "./SubscriptionRequired";
 import QuizModal from "./QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useBookmark } from "@/hooks/useBookmark";
-import { useSubscription } from "@/hooks/use-subscription";
 import ErrorBoundary from "./ErrorBoundary";
 import { CompactErrorFallback } from "./ErrorFallback";
 
@@ -51,7 +49,21 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   const axios = usePrivateAxios();
   const { isBookmarked } = useBookmark(article._id);
   const { handleAsyncError } = useErrorHandler({ context: "ArticleCard" });
-  const { has_premium } = useSubscription();
+
+  // Local language override (null means use user preference)
+  const [languageOverride, setLanguageOverride] = useState<"bn" | "en" | null>(
+    null,
+  );
+
+  // Compute effective language from user preference or override
+  const language = useMemo(() => {
+    if (languageOverride) return languageOverride;
+    return (user?.preferences?.language as "bn" | "en") || "bn";
+  }, [languageOverride, user?.preferences?.language]);
+
+  // Get the appropriate summary based on selected language
+  const current_summary =
+    language === "bn" ? article.summary_60_bn : article.summary_60_en;
 
   // Text-to-Speech hook for the summary
   const {
@@ -65,8 +77,8 @@ function ArticleCard({ article, id }: ArticleCardProps) {
     stop,
     isSupported,
   } = useTextToSpeech({
-    text: article.summary_60_bn || article.title,
-    lang: "bn-BD", // Bengali language
+    text: current_summary || article.title,
+    lang: language === "bn" ? "bn-BD" : "en-US",
     rate: 0.85, // Slightly slower for better comprehension
     pitch: 1,
   });
@@ -110,8 +122,12 @@ function ArticleCard({ article, id }: ArticleCardProps) {
       return;
     }
 
-    if (!article.summary_60_bn) {
-      alert("এই নিবন্ধের জন্য কোন সারসংক্ষেপ নেই।");
+    if (!current_summary) {
+      alert(
+        language === "bn"
+          ? "এই নিবন্ধের জন্য কোন সারসংক্ষেপ নেই।"
+          : "No summary available for this article.",
+      );
       return;
     }
 
@@ -134,7 +150,7 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   const handleShare = async () => {
     const shareData = {
       title: article.title,
-      text: article.summary_60_bn || article.title,
+      text: current_summary || article.title,
       url: article.source_url,
     };
 
@@ -144,9 +160,9 @@ function ArticleCard({ article, id }: ArticleCardProps) {
       } else {
         // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(
-          `${article.title}\n\n${article.summary_60_bn}\n\n${article.source_url}`,
+          `${article.title}\n\n${current_summary}\n\n${article.source_url}`,
         );
-        alert("লিংক কপি করা হয়েছে!");
+        alert(language === "bn" ? "লিংক কপি করা হয়েছে!" : "Link copied!");
       }
     } catch (error) {
       // User cancelled or error occurred
@@ -193,6 +209,44 @@ function ArticleCard({ article, id }: ArticleCardProps) {
       </Link>
 
       <div className="p-4 flex flex-col grow">
+        {/* Language Toggle */}
+        <div className="flex justify-end mb-2">
+          <div className="inline-flex rounded-md bg-muted p-1">
+            <button
+              onClick={() => {
+                setLanguageOverride("bn");
+                if (showAudioPlayer) {
+                  stop();
+                  setShowAudioPlayer(false);
+                }
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded transition-all ${
+                language === "bn"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              বাংলা
+            </button>
+            <button
+              onClick={() => {
+                setLanguageOverride("en");
+                if (showAudioPlayer) {
+                  stop();
+                  setShowAudioPlayer(false);
+                }
+              }}
+              className={`px-3 py-1 text-xs font-medium rounded transition-all ${
+                language === "en"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              English
+            </button>
+          </div>
+        </div>
+
         {/* Title */}
         <Link href={`/article/${article._id}`}>
           <h2 className="text-lg font-bold text-primary mb-2 hover:underline cursor-pointer">
@@ -230,7 +284,7 @@ function ArticleCard({ article, id }: ArticleCardProps) {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground mb-4">
-            {article.summary_60_bn}
+            {current_summary}
           </p>
         )}
 

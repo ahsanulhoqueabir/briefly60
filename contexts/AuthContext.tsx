@@ -342,6 +342,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateLanguagePreference = async (language: "bn" | "en") => {
+    try {
+      const token = LocalStorageService.getAuthToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch("/api/auth/language-preference", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ language }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to update language preference");
+      }
+
+      // Update user state with new language preference
+      setAuthState((prev) => ({
+        ...prev,
+        user: prev.user
+          ? {
+              ...prev.user,
+              preferences: {
+                ...prev.user.preferences,
+                language,
+              },
+            }
+          : null,
+      }));
+
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update language preference";
+      handleAuthError(error, "updateLanguagePreference");
+      return {
+        success: false,
+        error: message,
+      };
+    }
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     signInWithEmail,
@@ -352,6 +405,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     forgotPassword,
     resetPassword,
+    updateLanguagePreference,
   };
 
   return (
