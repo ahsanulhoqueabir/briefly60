@@ -138,19 +138,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       }
       if (isLogin) {
         const loginData = data as LoginFormData;
-        await signInWithEmail({ 
-          email: loginData.email, 
-          password: loginData.password, 
-          turnstileToken 
+        await signInWithEmail({
+          email: loginData.email,
+          password: loginData.password,
+          turnstileToken,
         });
       } else {
         const signupData = data as SignUpFormData;
-        await signUpWithEmail({ 
+        await signUpWithEmail({
           name: signupData.name,
-          email: signupData.email, 
+          email: signupData.email,
           password: signupData.password,
           confirm_password: signupData.confirm_password,
-          turnstileToken 
+          turnstileToken,
         });
       }
 
