@@ -292,9 +292,10 @@ npm run dev
 
 1. User registers with email/password
 2. Server validates input and hashes password
-3. JWT token generated and stored in HTTP-only cookie
-4. Token verified on protected routes via middleware
-5. Refresh token mechanism for session management
+3. JWT token generated and returned in response
+4. Client stores token in localStorage
+5. Token included in Authorization header for protected routes
+6. Middleware verifies token on each request
 
 ### Subscription Flow
 
@@ -322,12 +323,13 @@ npm run dev
 
 ## 🔒 Security Features
 
-- **JWT Authentication** with HTTP-only cookies
+- **JWT Authentication** with Bearer token in Authorization header
+- **Token Storage** in localStorage with secure handling
 - **Password Hashing** with bcrypt (10 salt rounds)
 - **Input Validation** using Zod schemas
 - **MongoDB Injection Prevention**
 - **XSS Protection** via sanitization
-- **CSRF Protection** in forms
+- **CORS Configuration** for API security
 - **Rate Limiting** on sensitive endpoints
 - **Secure Password Reset** with time-limited tokens
 
