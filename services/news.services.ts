@@ -131,7 +131,7 @@ export class NewsService {
   private static buildSort(
     params: ArticleQueryParams,
     hasTextSearch: boolean = false,
-  ): Record<string, number> {
+  ): Record<string, number | { $meta: string }> {
     // If text search is active and no custom sort, sort by text score for relevance
     if (hasTextSearch && !params.sort_by) {
       return { score: { $meta: "textScore" }, published_at: -1 };
