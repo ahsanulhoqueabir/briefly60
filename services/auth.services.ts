@@ -6,6 +6,7 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User.model";
 import Subscription from "@/models/Subscription.model";
 import Bookmark from "@/models/Bookmark.model";
+import crypto from "crypto";
 
 export class AuthService {
   /**
@@ -219,6 +220,127 @@ export class AuthService {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to get user",
+      };
+    }
+  }
+
+  /**
+   * Request password reset (forgot password)
+   */
+  static async forgotPassword(email: string) {
+    try {
+      await dbConnect();
+
+      // Find user by email
+      const user = await User.findOne({ email: email.toLowerCase() });
+
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return {
+          success: true,
+          message:
+            "If a user with that email exists, a password reset link has been sent",
+        };
+      }
+
+      // Generate a secure random token
+      const resetToken = crypto.randomBytes(32).toString("hex");
+
+      // Hash the token before storing in database
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+      // Set token and expiry (1 hour from now)
+      user.reset_password_token = hashedToken;
+      user.reset_password_expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await user.save();
+
+      // In production, send email with resetToken (not hashedToken)
+      // For now, we'll return the token in response (remove this in production)
+      // Email should contain: ${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${resetToken}
+
+      console.log("Password reset token:", resetToken);
+      console.log(
+        "Reset link:",
+        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/reset-password?token=${resetToken}`,
+      );
+
+      return {
+        success: true,
+        message:
+          "If a user with that email exists, a password reset link has been sent",
+        // Remove this in production - only for development
+        resetToken:
+          process.env.NODE_ENV === "development" ? resetToken : undefined,
+      };
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to process password reset request",
+      };
+    }
+  }
+
+  /**
+   * Reset password with token
+   */
+  static async resetPassword(token: string, newPassword: string) {
+    try {
+      await dbConnect();
+
+      // Hash the token to match stored hash
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      // Find user with valid token and not expired
+      const user = await User.findOne({
+        reset_password_token: hashedToken,
+        reset_password_expires: { $gt: new Date() },
+      }).select("+reset_password_token +reset_password_expires");
+
+      if (!user) {
+        return {
+          success: false,
+          error: "Invalid or expired reset token",
+        };
+      }
+
+      // Validate password strength
+      const passwordValidation = validateStrongPassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return {
+          success: false,
+          error: passwordValidation.errors[0],
+        };
+      }
+
+      // Hash new password
+      const hashedPassword = await PasswordService.hashPassword(newPassword);
+
+      // Update password and clear reset token fields
+      user.password = hashedPassword;
+      user.reset_password_token = undefined;
+      user.reset_password_expires = undefined;
+      await user.save();
+
+      return {
+        success: true,
+        message: "Password has been reset successfully",
+      };
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to reset password",
       };
     }
   }
