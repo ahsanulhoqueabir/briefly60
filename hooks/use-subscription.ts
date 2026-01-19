@@ -92,65 +92,70 @@ export const useSubscriptionInit = () => {
     };
   }, []);
 
-  const initializePayment = useCallback(async (plan: string) => {
-    // Check if user is authenticated
-    if (typeof window === "undefined") {
-      return { success: false, error: "Window not available" };
-    }
-
-    const token = LocalStorageService.getAuthToken();
-    if (!token) {
-      if (is_mounted_ref.current) {
-        setError("অনুগ্রহ করে প্রথমে লগইন করুন");
-      }
-      return { success: false, error: "Authentication required" };
-    }
-
-    try {
-      if (is_mounted_ref.current) {
-        setIsLoading(true);
-        setError(null);
+  const initializePayment = useCallback(
+    async (plan_id: string, auto_renew = false) => {
+      // Check if user is authenticated
+      if (typeof window === "undefined") {
+        return { success: false, error: "Window not available" };
       }
 
-      const response = await fetch("/api/subscription/init", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const token = LocalStorageService.getAuthToken();
+      if (!token) {
+        if (is_mounted_ref.current) {
+          setError("অনুগ্রহ করে প্রথমে লগইন করুন");
+        }
+        return { success: false, error: "Authentication required" };
       }
 
-      const data = await response.json();
+      try {
+        if (is_mounted_ref.current) {
+          setIsLoading(true);
+          setError(null);
+        }
 
-      if (data.success && data.gateway_url) {
-        // Redirect to payment gateway
-        window.location.href = data.gateway_url;
-        return { success: true };
-      } else {
-        const error_message = data.error || "পেমেন্ট শুরু করতে ব্যর্থ হয়েছে";
+        const response = await fetch("/api/subscription/init", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ plan_id, auto_renew }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.gateway_url) {
+          // Redirect to payment gateway
+          window.location.href = data.gateway_url;
+          return { success: true };
+        } else {
+          const error_message = data.error || "পেমেন্ট শুরু করতে ব্যর্থ হয়েছে";
+          if (is_mounted_ref.current) {
+            setError(error_message);
+          }
+          return { success: false, error: error_message };
+        }
+      } catch (err) {
+        const error_message =
+          err instanceof Error
+            ? err.message
+            : "পেমেন্ট শুরু করতে সমস্যা হয়েছে";
         if (is_mounted_ref.current) {
           setError(error_message);
         }
         return { success: false, error: error_message };
+      } finally {
+        if (is_mounted_ref.current) {
+          setIsLoading(false);
+        }
       }
-    } catch (err) {
-      const error_message =
-        err instanceof Error ? err.message : "পেমেন্ট শুরু করতে সমস্যা হয়েছে";
-      if (is_mounted_ref.current) {
-        setError(error_message);
-      }
-      return { success: false, error: error_message };
-    } finally {
-      if (is_mounted_ref.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     initializePayment,

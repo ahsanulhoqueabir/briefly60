@@ -136,10 +136,10 @@ export function RoleManagementModal({
         <div className="space-y-4 mb-6">
           <div className="flex items-center gap-3 pb-4 border-b border-border">
             <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-              {user.first_name?.charAt(0).toUpperCase() || "?"}
+              {user.name?.charAt(0).toUpperCase() || "?"}
             </div>
             <div>
-              <p className="font-semibold text-foreground">{user.first_name}</p>
+              <p className="font-semibold text-foreground">{user.name}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>

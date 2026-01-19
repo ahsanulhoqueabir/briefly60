@@ -1,11 +1,9 @@
 import Subscription, { ISubscription } from "@/models/Subscription.model";
 import { Types } from "mongoose";
-import {
-  getPlanById,
-  calculateEndDate,
-  calculateDaysRemaining,
-} from "@/lib/subscription-constants";
 import { UserSubscriptionStatus } from "@/types/subscription.types";
+import { SubscriptionPlanService } from "./subscription-plan.service";
+import dbConnect from "@/lib/mongodb";
+import { calculateDaysRemaining, calculateEndDate } from "@/lib/utils";
 
 export class SubscriptionService {
   /**
@@ -13,13 +11,16 @@ export class SubscriptionService {
    */
   async getActiveSubscription(user_id: string): Promise<ISubscription | null> {
     try {
+      await dbConnect();
       const userId = new Types.ObjectId(user_id);
       return await Subscription.findOne({
         user_id: userId,
         is_active: true,
         end_date: { $gte: new Date() },
         "payment_info.payment_status": "completed",
-      }).sort({ end_date: -1 });
+      })
+        .sort({ end_date: -1 })
+        .populate("plan_id");
     } catch (error) {
       console.error("Error fetching active subscription:", error);
       return null;
@@ -45,12 +46,15 @@ export class SubscriptionService {
         has_active_subscription: true,
         subscription: {
           id: subscription._id.toString(),
-          plan: subscription.plan,
+          plan: subscription.plan_snapshot.plan_id,
+          plan_name: subscription.plan_snapshot.name,
           start_date: subscription.start_date,
           end_date: subscription.end_date,
           is_active: subscription.is_active,
+          auto_renew: subscription.auto_renew,
           days_remaining: daysRemaining,
           payment_status: subscription.payment_info.payment_status,
+          amount: subscription.payment_info.amount_paid,
         },
       };
     } catch (error) {
@@ -64,41 +68,50 @@ export class SubscriptionService {
    */
   async createPendingSubscription(
     user_id: string,
-    plan: string,
+    plan_id: string,
     transaction_id: string,
     amount: number,
+    auto_renew = false,
   ): Promise<ISubscription | null> {
     try {
+      await dbConnect();
       const userId = new Types.ObjectId(user_id);
-      const planDetails = getPlanById(plan);
 
-      if (!planDetails) {
-        throw new Error("Invalid plan selected");
+      // Fetch plan from database
+      const plan = await SubscriptionPlanService.getActivePlanByPlanId(plan_id);
+
+      if (!plan) {
+        throw new Error("Invalid plan selected or plan is inactive");
       }
 
       const start_date = new Date();
-      const end_date = calculateEndDate(
-        start_date,
-        planDetails.duration_months,
-      );
+      const end_date = calculateEndDate(start_date, plan.duration_months);
 
       const subscription = await Subscription.create({
         user_id: userId,
-        plan: planDetails.id,
-        duration_months: planDetails.duration_months,
+        plan_id: plan._id,
+        plan_snapshot: {
+          plan_id: plan.plan_id,
+          name: plan.name,
+          duration_months: plan.duration_months,
+          price: plan.price,
+          original_price: plan.original_price,
+          currency: plan.currency,
+          features: plan.features,
+        },
         start_date,
         end_date,
-        description: `${planDetails.name} - ${planDetails.duration_months} months`,
+        description: `${plan.name} - ${plan.duration_months} months`,
         payment_info: {
           gateway: "sslcommerz",
           transaction_id,
-          amount,
-          currency: "BDT",
+          amount_paid: amount,
+          currency: plan.currency,
           payment_status: "pending",
           tran_id: transaction_id,
         },
         is_active: false,
-        auto_renew: false,
+        auto_renew,
       });
 
       return subscription;

@@ -28,7 +28,7 @@ export interface AdminUser extends User {
 }
 
 /**
- * User preferences stored in Directus
+ * User preferences stored in MongoDB
  */
 export interface UserPreferences {
   categories?: string[];

@@ -13,7 +13,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Crown, Calendar, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { SUBSCRIPTION_PLANS } from "@/lib/subscription-constants";
 
 export function SubscriptionStatusCard() {
   const { subscription_status, is_loading, has_premium } = useSubscription();
@@ -56,9 +55,10 @@ export function SubscriptionStatusCard() {
     );
   }
 
-  const plan = SUBSCRIPTION_PLANS.find(
-    (p) => p.id === subscription_status?.subscription?.plan,
-  );
+  const planName =
+    subscription_status?.subscription?.plan_name ||
+    subscription_status?.subscription?.plan ||
+    "প্রিমিয়াম";
 
   return (
     <Card className="border-2 border-primary">
@@ -70,7 +70,7 @@ export function SubscriptionStatusCard() {
           </span>
           <Badge variant="secondary">প্রিমিয়াম</Badge>
         </CardTitle>
-        <CardDescription>{plan?.name}</CardDescription>
+        <CardDescription>{planName}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-sm">

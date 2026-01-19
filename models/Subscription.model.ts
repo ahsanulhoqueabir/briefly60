@@ -1,6 +1,5 @@
 import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
-export type PlanType = "free" | "monthly" | "half_yearly" | "yearly";
 export type PaymentStatus =
   | "pending"
   | "processing"
@@ -13,15 +12,24 @@ export type PaymentGateway = "sslcommerz" | "manual" | "free";
 export interface ISubscription extends Document {
   _id: Types.ObjectId;
   user_id: Types.ObjectId;
-  plan: PlanType;
-  duration_months: number;
+  plan_id: Types.ObjectId; // Reference to SubscriptionPlan
+  plan_snapshot: {
+    // Store plan details at time of purchase
+    plan_id: string; // monthly, half_yearly, yearly
+    name: string;
+    duration_months: number;
+    price: number;
+    original_price?: number;
+    currency: string;
+    features: string[];
+  };
   start_date: Date;
   end_date: Date;
   description?: string;
   payment_info: {
     gateway: PaymentGateway;
     transaction_id: string;
-    amount: number;
+    amount_paid: number; // Actual amount paid
     currency: string;
     payment_method?: string;
     payment_status: PaymentStatus;
@@ -52,16 +60,37 @@ const SubscriptionSchema = new Schema<ISubscription>(
       required: [true, "User ID is required"],
       index: true,
     },
-    plan: {
-      type: String,
-      enum: ["free", "monthly", "half_yearly", "yearly"],
-      required: [true, "Plan type is required"],
-      default: "free",
+    plan_id: {
+      type: Schema.Types.ObjectId,
+      ref: "SubscriptionPlan",
+      required: [true, "Plan ID is required"],
+      index: true,
     },
-    duration_months: {
-      type: Number,
-      required: [true, "Duration is required"],
-      default: 0,
+    plan_snapshot: {
+      plan_id: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      duration_months: {
+        type: Number,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      original_price: {
+        type: Number,
+      },
+      currency: {
+        type: String,
+        required: true,
+      },
+      features: [String],
     },
     start_date: {
       type: Date,
@@ -89,9 +118,9 @@ const SubscriptionSchema = new Schema<ISubscription>(
         unique: true,
         index: true,
       },
-      amount: {
+      amount_paid: {
         type: Number,
-        required: [true, "Amount is required"],
+        required: [true, "Amount paid is required"],
         default: 0,
       },
       currency: {
@@ -151,6 +180,7 @@ const SubscriptionSchema = new Schema<ISubscription>(
 
 // Compound indexes for efficient queries
 SubscriptionSchema.index({ user_id: 1, is_active: 1 });
+SubscriptionSchema.index({ plan_id: 1 });
 SubscriptionSchema.index({ end_date: 1, is_active: 1 });
 SubscriptionSchema.index({ "payment_info.tran_id": 1 });
 SubscriptionSchema.index({ "payment_info.val_id": 1 });

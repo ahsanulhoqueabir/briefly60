@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, first_name, confirm_password } = await req.json();
+    const { email, password, name, confirm_password } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
           success: false,
           error: "Email and password are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (password !== confirm_password) {
@@ -20,14 +20,14 @@ export async function POST(req: Request) {
           success: false,
           error: "Passwords do not match",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const res = await AuthService.createAccount({
       email,
       password,
-      first_name,
+      name,
       confirm_password,
     });
 
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
           user: res.user,
           token: res.token,
         },
-        { status: 200 }
+        { status: 200 },
       );
     } else {
       return NextResponse.json(
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
           success: false,
           error: res.error || "Invalid credentials",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
   } catch (error) {
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         error: "Login failed",
         details: error instanceof Error ? error.message : null,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

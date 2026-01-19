@@ -1,23 +1,9 @@
-import { PlanType, PaymentStatus } from "@/models/Subscription.model";
-
-export interface SubscriptionPlan {
-  id: PlanType;
-  name: string;
-  name_en?: string;
-  duration_months: number;
-  price: number;
-  original_price?: number;
-  currency: string;
-  features: string[];
-  features_en?: string[];
-  popular?: boolean;
-  savings?: string;
-  savings_en?: string;
-}
+import { PaymentStatus } from "@/models/Subscription.model";
 
 export interface InitPaymentRequest {
-  plan: Exclude<PlanType, "free">;
+  plan_id: string; // monthly, half_yearly, yearly
   user_id: string;
+  auto_renew?: boolean;
 }
 
 export interface InitPaymentResponse {
@@ -32,10 +18,12 @@ export interface PaymentValidationResponse {
   success: boolean;
   subscription?: {
     id: string;
-    plan: PlanType;
+    plan_id: string;
+    plan_name: string;
     start_date: Date;
     end_date: Date;
     is_active: boolean;
+    auto_renew: boolean;
   };
   error?: string;
 }
@@ -44,12 +32,15 @@ export interface UserSubscriptionStatus {
   has_active_subscription: boolean;
   subscription?: {
     id: string;
-    plan: PlanType;
+    plan: string;
+    plan_name: string;
     start_date: Date;
     end_date: Date;
     is_active: boolean;
+    auto_renew: boolean;
     days_remaining: number;
     payment_status: PaymentStatus;
+    amount?: number;
   };
 }
 
@@ -74,8 +65,8 @@ export interface SSLCommerzPaymentData {
   shipping_method: string;
   num_of_item: number;
   value_a?: string; // user_id
-  value_b?: string; // plan
-  value_c?: string; // duration_months
+  value_b?: string; // plan_id
+  value_c?: string; // auto_renew
   value_d?: string; // timestamp
 }
 

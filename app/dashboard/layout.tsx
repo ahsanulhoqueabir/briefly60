@@ -79,11 +79,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="flex items-center gap-3"
               >
                 <div className="h-10 w-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-primary/10">
-                  {user?.first_name?.charAt(0).toUpperCase()}
+                  {user?.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">
-                    {user?.first_name}
+                    {user?.name}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium capitalize">
@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="flex justify-center"
               >
                 <div className="h-10 w-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-primary/10">
-                  {user?.first_name?.charAt(0).toUpperCase()}
+                  {user?.name?.charAt(0).toUpperCase()}
                 </div>
               </motion.div>
             )}

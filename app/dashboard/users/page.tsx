@@ -197,10 +197,10 @@ export default function UsersManagementPage() {
       render: (user: AdminUser) => (
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            {user.first_name?.charAt(0).toUpperCase() || "?"}
+            {user.name?.charAt(0).toUpperCase() || "?"}
           </div>
           <div>
-            <p className="font-medium">{user.first_name}</p>
+            <p className="font-medium">{user.name}</p>
             <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>
@@ -535,12 +535,11 @@ export default function UsersManagementPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl">
-                  {userDetailsModal.user.first_name?.charAt(0).toUpperCase() ||
-                    "?"}
+                  {userDetailsModal.user.name?.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div>
                   <h4 className="text-xl font-semibold">
-                    {userDetailsModal.user.first_name}
+                    {userDetailsModal.user.name}
                   </h4>
                   <p className="text-muted-foreground">
                     {userDetailsModal.user.email}

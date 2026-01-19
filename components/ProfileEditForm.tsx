@@ -33,11 +33,11 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   const { update_profile, loading: updating } = useProfile();
 
   const [form_data, set_form_data] = useState({
-    name: user.first_name || "",
+    name: user.name || "",
     image: user.image || "",
-    notifications: true,
-    theme: "light" as "light" | "dark",
-    language: "en",
+    notifications: user.preferences?.notifications ?? true,
+    theme: (user.preferences?.theme as "light" | "dark") || "light",
+    language: user.preferences?.language || "en",
   });
 
   const [image_preview, set_image_preview] = useState<string | null>(
