@@ -32,7 +32,8 @@ export function generateSEOMetadata({
   author,
   noIndex = false,
 }: SEOProps): Metadata {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online";
   const fullCanonicalUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
   const fullOgImage = ogImage.startsWith("http")
     ? ogImage
@@ -115,7 +116,8 @@ export function generateSchemaOrg(
   type: "WebSite" | "NewsArticle" | "Organization",
   data: any,
 ) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online";
 
   const schemas: Record<string, any> = {
     WebSite: {

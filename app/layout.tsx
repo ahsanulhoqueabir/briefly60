@@ -54,7 +54,7 @@ const liPadmasetu = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online",
   ),
   title: {
     default: "Briefly60 - News in 60 Words",
@@ -188,14 +188,15 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "Briefly60",
-              url: process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com",
+              url:
+                process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online",
               description:
                 "Get the latest news from popular newspapers summarized in just 60 words",
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com"}/discover?q={search_term_string}`,
+                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online"}/discover?q={search_term_string}`,
                 },
                 "query-input": "required name=search_term_string",
               },

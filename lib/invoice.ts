@@ -99,7 +99,7 @@ export async function generateInvoicePDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text("Your trusted news companion", 20, yPos + 5);
-  doc.text("www.briefly60.com", 20, yPos + 10);
+  doc.text("www.briefly60.online", 20, yPos + 10);
 
   // Bill To section
   doc.setFont("helvetica", "bold");
@@ -199,7 +199,7 @@ export async function generateInvoicePDF(
   });
   doc.setFontSize(8);
   doc.text(
-    "For support, contact us at support@briefly60.com",
+    "For support, contact us at support@briefly60.online",
     105,
     pageHeight - 9,
     { align: "center" },

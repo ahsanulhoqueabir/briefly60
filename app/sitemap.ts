@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.online";
   const currentDate = new Date();
 
   // Static pages

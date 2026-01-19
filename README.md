@@ -589,7 +589,7 @@ This project is private and proprietary.
 
 ## 📞 Support
 
-For support, email support@briefly60.com or open an issue in the repository.
+For support, email support@briefly60.online or open an issue in the repository.
 
 ## 🙏 Acknowledgments
 
