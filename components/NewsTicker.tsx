@@ -11,7 +11,7 @@ export default function NewsTicker({ articles }: NewsTickerProps) {
   if (articles.length === 0) return null;
 
   const marqueeItems: SlidingLogoMarqueeItem[] = articles.map((article) => ({
-    id: article.id,
+    id: article._id,
     content: (
       <span className="text-xs font-medium whitespace-nowrap">
         {article.title}

@@ -1,7 +1,6 @@
 "use client";
 
 import ArticleCard from "@/components/ArticleCard";
-import Headlines from "@/components/ui/headlines";
 import ImportantNewsBanner from "@/components/ImportantNewsBanner";
 import ImportantNewsSidebar from "@/components/ImportantNewsSidebar";
 import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
@@ -13,9 +12,6 @@ export default function HomePage() {
 
   return (
     <main className="bg-background">
-      {/* News Ticker at the top */}
-      <Headlines articles={articles} />
-
       <div className="container mx-auto px-4 py-2">
         {/* Error State */}
         {error && (
@@ -33,16 +29,6 @@ export default function HomePage() {
         <div className="lg:grid lg:grid-cols-12 lg:gap-6">
           {/* Left Side - Latest News (8 columns on desktop) */}
           <div className="lg:col-span-8">
-            {/* Latest Articles Section Header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                সর্বশেষ সংবাদ
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                সবচেয়ে নতুন খবরগুলো দেখুন
-              </p>
-            </div>
-
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {articles.map((article) => (

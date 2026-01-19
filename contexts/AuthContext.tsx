@@ -31,22 +31,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Helper function for error handling
+  const handleAuthError = (error: any, context: string) => {
+    console.error(`Auth error in ${context}:`, error);
+
+    // Show user-friendly error message using dynamic import
+    if (typeof window !== "undefined") {
+      import("sonner")
+        .then(({ toast }) => {
+          const message = error?.message || "An error occurred";
+          toast.error(message);
+        })
+        .catch(() => {
+          // Fallback if toast fails
+          console.warn("Toast notification failed for auth error");
+        });
+    }
+  };
+
   const refreshUser = async () => {
     const token = LocalStorageService.getAuthToken();
-    if (!token) return;
+    if (!token) {
+      setAuthState((prev) => ({ ...prev, loading: false }));
+      return;
+    }
 
     try {
-      const data = await fetch("/api/auth/me", {
+      const response = await fetch("/api/auth/me", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }).then((res) => res.json());
+      });
+
+      if (!response.ok) {
+        throw new Error(`Authentication failed: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       if (data.success && data.user) {
         setAuthState((prev) => ({
           ...prev,
           user: data.user,
+          loading: false,
         }));
       }
     } catch (error) {

@@ -14,7 +14,7 @@ const Headlines = ({ articles }: NewsTickerProps) => {
       className="bg-pride h-12 "
     >
       {articles.map((article) => (
-        <Headline key={article.id} news={article} />
+        <Headline key={article._id} news={article} />
       ))}
     </Marquee>
   );

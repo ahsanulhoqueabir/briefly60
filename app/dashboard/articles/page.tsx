@@ -69,7 +69,7 @@ export default function ArticlesManagementPage() {
         params.append("importanceMax", filters.importance_max.toString());
 
       const response = await axios.get(
-        `/api/dashboard/articles?${params.toString()}`
+        `/api/dashboard/articles?${params.toString()}`,
       );
       const result = response.data;
 
@@ -119,7 +119,7 @@ export default function ArticlesManagementPage() {
       toast.success(
         `${result.data.success} articles deleted successfully${
           result.data.failed > 0 ? `, ${result.data.failed} failed` : ""
-        }`
+        }`,
       );
       setBulkDeleteModal(false);
       setSelectedRows(new Set());
@@ -142,7 +142,7 @@ export default function ArticlesManagementPage() {
       toast.success(
         `${result.data.success} articles updated successfully${
           result.data.failed > 0 ? `, ${result.data.failed} failed` : ""
-        }`
+        }`,
       );
       setSelectedRows(new Set());
       loadArticles();
@@ -156,11 +156,11 @@ export default function ArticlesManagementPage() {
     try {
       const newStatus: ArticleStatus =
         article.status === "published" ? "draft" : "published";
-      await axios.patch(`/api/dashboard/articles/${article.id}`, {
+      await axios.patch(`/api/dashboard/articles/${article._id}`, {
         status: newStatus,
       });
       toast.success(
-        `Article ${newStatus === "published" ? "published" : "unpublished"}`
+        `Article ${newStatus === "published" ? "published" : "unpublished"}`,
       );
       loadArticles();
     } catch (error) {
@@ -181,7 +181,7 @@ export default function ArticlesManagementPage() {
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
-      setSelectedRows(new Set(articles.map((a) => a.id)));
+      setSelectedRows(new Set(articles.map((a) => a._id)));
     } else {
       setSelectedRows(new Set());
     }
@@ -222,8 +222,8 @@ export default function ArticlesManagementPage() {
             article.status === "published"
               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
               : article.status === "draft"
-              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
           }`}
         >
           {article.status === "published" ? (
@@ -261,7 +261,7 @@ export default function ArticlesManagementPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/dashboard/articles/${article.id}/edit`);
+              router.push(`/dashboard/articles/${article._id}/edit`);
             }}
             className="w-28 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-medium shadow-sm hover:shadow flex items-center justify-center gap-2"
             title="Edit article"
@@ -300,7 +300,7 @@ export default function ArticlesManagementPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setDeleteModal({ isOpen: true, articleId: article.id });
+              setDeleteModal({ isOpen: true, articleId: article._id });
             }}
             className="w-28 px-3 py-1.5 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-all font-medium shadow-sm hover:shadow flex items-center justify-center gap-2"
             title="Delete article"
@@ -488,6 +488,7 @@ export default function ArticlesManagementPage() {
           onRowSelect={handleRowSelect}
           onSelectAll={handleSelectAll}
           loading={loading}
+          idField="_id"
           emptyMessage={
             filters.search || filters.status || filters.category
               ? "No articles found matching your filters"

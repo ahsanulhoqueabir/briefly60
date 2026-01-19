@@ -25,7 +25,7 @@ export class AdminArticleService {
   static async getArticles(
     filters: AdminArticleFilters = {},
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<AdminApiResponse<Article[]>> {
     try {
       const params: any = {
@@ -139,11 +139,13 @@ export class AdminArticleService {
         ...data,
         status: data.status || "draft",
         published_at: data.published_at || new Date().toISOString(),
+        summary_60_bn: data.content.substring(0, 300) + "...", // Default Bengali summary
+        summary_60_en: data.content.substring(0, 300) + "...", // Default English summary
       };
 
       const response = await directusApi.post(
         `/items/${this.COLLECTION}`,
-        payload
+        payload,
       );
       return response.data.data;
     } catch (error) {
@@ -157,12 +159,12 @@ export class AdminArticleService {
    */
   static async updateArticle(
     id: string,
-    data: Partial<ArticleFormData>
+    data: Partial<ArticleFormData>,
   ): Promise<Article> {
     try {
       const response = await directusApi.patch(
         `/items/${this.COLLECTION}/${id}`,
-        data
+        data,
       );
       return response.data.data;
     } catch (error) {
@@ -188,7 +190,7 @@ export class AdminArticleService {
    */
   static async togglePublishStatus(
     id: string,
-    status: ArticleStatus
+    status: ArticleStatus,
   ): Promise<Article> {
     try {
       return await this.updateArticle(id, { status });
@@ -229,7 +231,7 @@ export class AdminArticleService {
    */
   static async bulkUpdateStatus(
     ids: string[],
-    status: ArticleStatus
+    status: ArticleStatus,
   ): Promise<BulkActionResult> {
     const result: BulkActionResult = {
       success: 0,
@@ -257,7 +259,7 @@ export class AdminArticleService {
    * Bulk action handler
    */
   static async bulkAction(
-    payload: BulkActionPayload
+    payload: BulkActionPayload,
   ): Promise<BulkActionResult> {
     switch (payload.action) {
       case "delete":
@@ -328,7 +330,7 @@ export class AdminArticleService {
             limit: 0,
             filter: JSON.stringify({ status: { _eq: "published" } }),
           },
-        }
+        },
       );
 
       // Draft articles

@@ -15,9 +15,10 @@ interface DataTableProps<T> {
   onSelectAll?: (selected: boolean) => void;
   loading?: boolean;
   emptyMessage?: string;
+  idField?: keyof T | ((item: T) => string);
 }
 
-export function DataTable<T extends { id: string }>({
+export function DataTable<T>({
   data,
   columns,
   onRowClick,
@@ -26,7 +27,14 @@ export function DataTable<T extends { id: string }>({
   onSelectAll,
   loading = false,
   emptyMessage = "No data available",
+  idField = "id" as keyof T,
 }: DataTableProps<T>) {
+  const getId = (item: T): string => {
+    if (typeof idField === "function") {
+      return idField(item);
+    }
+    return String(item[idField]);
+  };
   const allSelected =
     selectedRows && data.length > 0 && selectedRows.size === data.length;
 
@@ -77,7 +85,7 @@ export function DataTable<T extends { id: string }>({
         <tbody>
           {data.map((item) => (
             <tr
-              key={item.id}
+              key={getId(item)}
               onClick={() => onRowClick?.(item)}
               className={`border-b border-border hover:bg-accent/50 transition-colors ${
                 onRowClick ? "cursor-pointer" : ""
@@ -86,8 +94,8 @@ export function DataTable<T extends { id: string }>({
               {onRowSelect && (
                 <td className="p-3">
                   <Checkbox
-                    checked={selectedRows?.has(item.id)}
-                    onCheckedChange={() => onRowSelect(item.id)}
+                    checked={selectedRows?.has(getId(item))}
+                    onCheckedChange={() => onRowSelect(getId(item))}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </td>

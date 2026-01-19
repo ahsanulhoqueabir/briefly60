@@ -13,6 +13,9 @@ export interface NewsBrief {
   trending_score?: number;
 }
 
+// Error Types
+export * from "./error.types";
+
 // Theme Types
 export type Theme = "light" | "dark";
 

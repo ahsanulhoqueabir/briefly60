@@ -134,14 +134,14 @@ export class ArticleService {
         };
       }
 
-      let query = Article.findById(id).select("-__v");
+      let selectFields = "-__v";
 
       // Exclude quiz questions unless specifically requested
       if (!includeQuiz) {
-        query = query.select("-quiz_questions");
+        selectFields += " -quiz_questions";
       }
 
-      const article = await query;
+      const article = await Article.findById(id).select(selectFields).exec();
 
       if (!article) {
         return {
@@ -307,7 +307,7 @@ export class ArticleService {
 
       const articles = await Article.find({
         status: "published",
-        importance: { $in: ["high", "breaking"] },
+        importance: { $gte: 8 }, // High importance articles (8-10)
       })
         .sort({ published_at: -1 })
         .limit(limit)
