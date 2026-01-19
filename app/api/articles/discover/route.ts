@@ -64,12 +64,27 @@ export async function GET(request: NextRequest) {
 
     const result = await NewsService.getArticles(queryParams);
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error("Error in discover API:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to fetch articles";
+
     return NextResponse.json(
-      { error: "Failed to fetch articles" },
-      { status: 500 }
+      {
+        error: "Failed to fetch articles",
+        message: errorMessage,
+        data: [],
+        meta: {
+          total_count: 0,
+          filter_count: 0,
+          page: 1,
+          limit: 20,
+          total_pages: 0,
+        },
+      },
+      { status: 500 },
     );
   }
 }
