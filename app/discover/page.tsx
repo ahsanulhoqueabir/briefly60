@@ -94,7 +94,7 @@ export default function DiscoverPage() {
         setLoading(false);
       }
     },
-    [filters]
+    [filters],
   );
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function DiscoverPage() {
 
   const handleFilterChange = (
     key: keyof DiscoverFilters,
-    value: string | number
+    value: string | number,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -228,8 +228,8 @@ export default function DiscoverPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {articles.map((article) => (
                 <ArticleCard
-                  key={article.id}
-                  id={`article-${article.id}`}
+                  key={article._id}
+                  id={`article-${article._id}`}
                   article={article}
                 />
               ))}

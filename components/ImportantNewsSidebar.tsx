@@ -92,28 +92,10 @@ const ImportantNewsSidebar: React.FC = () => {
   }
 
   return (
-    <aside className="sticky top-20">
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
-        {/* Header */}
-        <div className="bg-linear-to-r from-primary/10 to-primary/5 p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-foreground">
-                গুরুত্বপূর্ণ সংবাদ
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                গত ৩ দিনের শীর্ষ খবর
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <aside className="sticky top-16">
+      <div className="bg-card rounded-lg  overflow-hidden">
         {/* News List */}
-        <div className="divide-y divide-border max-h-[calc(100vh-12rem)] overflow-y-auto">
+        <div className="divide-y divide-border max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
           {important_news.map((article, index) => {
             const has_image = article.banner && !image_errors.has(article._id);
 
@@ -146,7 +128,7 @@ const ImportantNewsSidebar: React.FC = () => {
 
                     {/* Thumbnail (if available) */}
                     {has_image && (
-                      <div className="relative w-full h-24 mb-2 rounded overflow-hidden">
+                      <div className="relative w-full aspect-video mb-2 rounded overflow-hidden">
                         <Image
                           src={article.banner!}
                           alt={article.title}
@@ -172,13 +154,6 @@ const ImportantNewsSidebar: React.FC = () => {
               </Link>
             );
           })}
-        </div>
-
-        {/* Footer */}
-        <div className="p-3 bg-muted/30 border-t border-border">
-          <p className="text-xs text-center text-muted-foreground">
-            সর্বমোট {important_news.length} টি গুরুত্বপূর্ণ সংবাদ
-          </p>
         </div>
       </div>
     </aside>

@@ -65,7 +65,7 @@ export class NewsService {
    * Build Directus filter object from query parameters
    */
   private static buildFilter(
-    params: ArticleQueryParams
+    params: ArticleQueryParams,
   ): DirectusFilter | undefined {
     const filter: DirectusFilter = {};
 
@@ -161,7 +161,7 @@ export class NewsService {
    * Fetch articles with advanced filtering, pagination, and sorting
    */
   static async getArticles(
-    params: ArticleQueryParams = {}
+    params: ArticleQueryParams = {},
   ): Promise<PaginatedResponse<Article>> {
     try {
       // Set default status to published if not specified
@@ -172,7 +172,7 @@ export class NewsService {
 
       const limit = Math.min(
         defaultParams.limit || this.DEFAULT_LIMIT,
-        this.MAX_LIMIT
+        this.MAX_LIMIT,
       );
       const page = defaultParams.page || 1;
       const offset =
@@ -234,7 +234,7 @@ export class NewsService {
 
       const response = await directusApi.get(
         `/items/${this.COLLECTION}/${id}`,
-        { params: queryParams }
+        { params: queryParams },
       );
 
       return response.data.data;
@@ -251,7 +251,7 @@ export class NewsService {
     try {
       const response = await directusApi.post(
         `/items/${this.COLLECTION}`,
-        payload
+        payload,
       );
 
       return response.data.data;
@@ -264,17 +264,19 @@ export class NewsService {
   /**
    * Update an existing article
    */
-  static async updateArticle(payload: UpdateArticlePayload): Promise<Article> {
+  static async updateArticle(
+    id: string,
+    payload: UpdateArticlePayload,
+  ): Promise<Article> {
     try {
-      const { id, ...updateData } = payload;
       const response = await directusApi.patch(
         `/items/${this.COLLECTION}/${id}`,
-        updateData
+        payload,
       );
 
       return response.data.data;
     } catch (error) {
-      console.error(`Error updating article ${payload.id}:`, error);
+      console.error(`Error updating article ${id}:`, error);
       throw error;
     }
   }
@@ -296,7 +298,7 @@ export class NewsService {
    */
   static async getArticlesByCategory(
     category: string,
-    params: Omit<ArticleQueryParams, "category"> = {}
+    params: Omit<ArticleQueryParams, "category"> = {},
   ): Promise<PaginatedResponse<Article>> {
     return this.getArticles({ ...params, category });
   }
@@ -322,7 +324,7 @@ export class NewsService {
    */
   static async searchArticles(
     query: string,
-    params: Omit<ArticleQueryParams, "search"> = {}
+    params: Omit<ArticleQueryParams, "search"> = {},
   ): Promise<PaginatedResponse<Article>> {
     return this.getArticles({ ...params, search: query });
   }

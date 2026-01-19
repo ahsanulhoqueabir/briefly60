@@ -16,12 +16,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import SoundWave from "./SoundWave";
 import AuthRequired from "./AuthRequired";
 import QuizModal from "./QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useBookmark } from "@/hooks/useBookmark";
+import ErrorBoundary from "./ErrorBoundary";
+import { CompactErrorFallback } from "./ErrorFallback";
 
 interface ArticleCardProps {
   article: Article;
@@ -37,7 +40,7 @@ const validUrl = (url: string): boolean => {
   }
 };
 
-export default function ArticleCard({ article, id }: ArticleCardProps) {
+function ArticleCard({ article, id }: ArticleCardProps) {
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
@@ -45,6 +48,7 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
   const { user, refreshUser } = useAuth();
   const axios = usePrivateAxios();
   const { isBookmarked } = useBookmark(article._id);
+  const { handleAsyncError } = useErrorHandler({ context: "ArticleCard" });
 
   // Text-to-Speech hook for the summary
   const {
@@ -68,24 +72,25 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
     if (isBookmarkLoading) return;
 
     setIsBookmarkLoading(true);
-    try {
+
+    const success = await handleAsyncError(async () => {
       const response = await axios.post("/api/bookmark", {
         news: article._id,
       });
 
       if (response.data.success) {
         await refreshUser();
+        return true;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.error("Error handling bookmark:", error);
-      alert(
-        error?.response?.data?.message ||
-          "বুকমার্ক প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
-      );
-    } finally {
-      setIsBookmarkLoading(false);
+      throw new Error("Bookmark operation failed");
+    });
+
+    if (!success) {
+      // Error already handled by handleAsyncError
+      console.log("Bookmark operation failed");
     }
+
+    setIsBookmarkLoading(false);
   };
 
   const handleQuizClick = () => {
@@ -355,3 +360,14 @@ export default function ArticleCard({ article, id }: ArticleCardProps) {
     </article>
   );
 }
+
+// Wrap ArticleCard with ErrorBoundary for better error handling
+const ArticleCardWithErrorBoundary: React.FC<ArticleCardProps> = (props) => {
+  return (
+    <ErrorBoundary fallback={CompactErrorFallback}>
+      <ArticleCard {...props} />
+    </ErrorBoundary>
+  );
+};
+
+export default ArticleCardWithErrorBoundary;

@@ -41,13 +41,6 @@ export interface ArticleSummaries {
 }
 
 /**
- * Article classification and quality metrics
- */
-export interface ArticleClassification {
-  category: string;
-  importance: number;
-  keywords?: string[];
-/**
  * Article classification fields
  */
 export interface ArticleClassification {
@@ -63,7 +56,8 @@ export interface ArticleClassification {
  * Complete article from MongoDB
  */
 export interface Article
-  extends ArticleSource,
+  extends
+    ArticleSource,
     ArticleContent,
     ArticleSummaries,
     ArticleClassification {
@@ -76,8 +70,9 @@ export interface Article
 /**
  * Article creation payload
  */
-export interface CreateArticlePayload
-  extends Partial<Omit<Article, "_id" | "createdAt" | "updatedAt">> {
+export interface CreateArticlePayload extends Partial<
+  Omit<Article, "_id" | "createdAt" | "updatedAt">
+> {
   title: string;
   content: string;
   source_name: string;
@@ -90,8 +85,9 @@ export interface CreateArticlePayload
 /**
  * Article update payload
  */
-export interface UpdateArticlePayload
-  extends Partial<Omit<Article, "_id" | "createdAt" | "updatedAt">> {}
+export interface UpdateArticlePayload extends Partial<
+  Omit<Article, "_id" | "createdAt" | "updatedAt">
+> {}
 
 /**
  * Article query filters
@@ -136,9 +132,7 @@ export interface SortParams {
  * Article query parameters (combines filters, pagination, sorting)
  */
 export interface ArticleQueryParams
-  extends ArticleFilters,
-    PaginationParams,
-    SortParams {
+  extends ArticleFilters, PaginationParams, SortParams {
   fields?: string[];
 }
 

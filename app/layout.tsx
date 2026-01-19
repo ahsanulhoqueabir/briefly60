@@ -4,7 +4,10 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ErrorProvider } from "@/contexts/ErrorContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,11 +67,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${blackOpsOne.variable} ${inter.variable} ${liPadmasetu.variable} antialiased bg-background text-foreground min-h-screen font-sans`}
       >
-        <ThemeProvider>
-          <AuthProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </AuthProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ErrorProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    className: "bg-background text-foreground border",
+                  }}
+                />
+              </AuthProvider>
+            </ThemeProvider>
+          </ErrorProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
