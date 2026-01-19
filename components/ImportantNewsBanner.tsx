@@ -7,7 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface ImportantNewsResponse {
-  articles: Article[];
+  success: boolean;
+  data: Article[];
   pagination: {
     current_page: number;
     total_pages: number;
@@ -42,7 +43,7 @@ const ImportantNewsBanner: React.FC = () => {
         }
 
         const data: ImportantNewsResponse = await response.json();
-        set_important_news(data.articles || []);
+        set_important_news(data.data || []);
       } catch (err) {
         console.error("Error fetching important news:", err);
         set_error(
