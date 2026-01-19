@@ -3,15 +3,16 @@
 import ArticleCard from "@/components/ArticleCard";
 import ImportantNewsBanner from "@/components/ImportantNewsBanner";
 import ImportantNewsSidebar from "@/components/ImportantNewsSidebar";
-import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
+import RefreshIndicator from "@/components/RefreshIndicator";
+import { useArticles } from "@/contexts/ArticlesContext";
 import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
-  const { articles, loading, error, hasMore, observerRef } =
-    useInfiniteArticles();
+  const { articles, loading, error } = useArticles();
 
   return (
     <main className="bg-background">
+      <RefreshIndicator />
       <div className="container mx-auto px-4 py-2">
         {/* Error State */}
         {error && (
@@ -40,27 +41,10 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Loading Indicator */}
-            {loading && (
+            {/* Loading Indicator - Only on initial load */}
+            {loading && articles.length === 0 && (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            )}
-
-            {/* Infinite Scroll Trigger */}
-            {hasMore && !loading && (
-              <div
-                ref={observerRef}
-                className="h-10 flex items-center justify-center"
-              >
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-
-            {/* No More Content */}
-            {!hasMore && articles.length > 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">আর কোনো সংবাদ নেই</p>
               </div>
             )}
 

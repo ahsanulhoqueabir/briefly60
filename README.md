@@ -27,6 +27,8 @@ A modern, full-stack news aggregation and reading platform built with Next.js 16
 - **Subscription Management** with auto-renewal options
 - **Theme Toggle** (Light/Dark mode)
 - **Multi-language Support** (English/Bangla)
+- **PWA Support** - Install as mobile/desktop app
+- **Offline Access** - Read cached articles offline
 
 ### 📰 Content Management
 
@@ -61,6 +63,19 @@ A modern, full-stack news aggregation and reading platform built with Next.js 16
 - **Subscription Plan Management**
 - **Analytics Dashboard**
 - **Content Moderation**
+
+### 🔍 SEO & Performance
+
+- **Server-Side Rendering** with Next.js App Router
+- **Complete Meta Tags** (Open Graph, Twitter Cards)
+- **Structured Data** with JSON-LD schemas
+- **Dynamic Sitemap** generation
+- **Robots.txt** configuration
+- **Optimized Images** with Next.js Image component
+- **Progressive Web App** (PWA) support
+- **Service Worker** for offline functionality
+- **Smart Caching** strategies
+- **Security Headers** and CSP
 
 ## 🏗️ Tech Stack
 
@@ -223,6 +238,9 @@ SSLCOMMERZ_IS_LIVE=false
 # App URLs
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+# SEO & PWA (Production)
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
 4. **Initialize the database**
@@ -571,7 +589,7 @@ This project is private and proprietary.
 
 ## 📞 Support
 
-For support, email support@briefly60.com or open an issue in the repository.
+For support, email support@briefly60.online or open an issue in the repository.
 
 ## 🙏 Acknowledgments
 

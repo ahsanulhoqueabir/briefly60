@@ -257,7 +257,7 @@ function ArticleCard({ article, id }: ArticleCardProps) {
         {/* Corrected Title (if clickbait score > 3) */}
         {showCorrectedTitle && (
           <div className="mb-2">
-            <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
+            <span className="text-xs text-white bg-secondary px-2 py-1 rounded">
               What it should be:
             </span>
             <p className="text-sm text-secondary font-medium mt-1 line-clamp-2">

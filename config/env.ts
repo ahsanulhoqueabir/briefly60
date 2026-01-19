@@ -27,3 +27,8 @@ export const sslcommerzConfig = {
   cancelUrl: `${baseurl}/api/subscription/sslcommerz/cancel`,
   ipnUrl: `${baseurl}/api/subscription/sslcommerz/ipn`,
 };
+
+export const turnstileConfig = {
+  siteKey: process.env.TURNSTILE_SITE_KEY!,
+  secretKey: process.env.TURNSTILE_SECRET_KEY!,
+};

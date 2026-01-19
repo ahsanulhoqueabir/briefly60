@@ -7,6 +7,8 @@ import { forgotPasswordSchema, ForgotPasswordFormData } from "@/lib/validation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, AlertCircle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTurnstile } from "@/hooks/use-turnstile";
+import { Turnstile } from "@marsidev/react-turnstile";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +30,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const { forgotPassword } = useAuth();
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { turnstileRef, turnstileToken, setTurnstileToken, resetTurnstile } =
+    useTurnstile();
 
   const {
     register,
@@ -41,22 +45,29 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
+      if (!turnstileToken) {
+        toast.error("Please complete the CAPTCHA challenge.");
+        return;
+      }
       setIsSubmitting(true);
-      const result = await forgotPassword(data.email);
+      const result = await forgotPassword(data.email, turnstileToken);
 
       if (result.success) {
         setIsSuccess(true);
         toast.success("Password reset email sent!");
         reset();
+        resetTurnstile();
         // Auto close after 3 seconds
         setTimeout(() => {
           handleClose();
         }, 3000);
       } else {
         toast.error(result.error || "Failed to send reset email");
+        resetTurnstile();
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +143,17 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   {errors.email.message}
                 </p>
               )}
+            </div>
+
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+              />
             </div>
 
             {/* Action Buttons */}

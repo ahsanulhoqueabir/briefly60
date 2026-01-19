@@ -17,7 +17,9 @@ import {
 } from "@/lib/validation";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
-
+import { useTurnstile } from "@/hooks/use-turnstile";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { toast } from "sonner";
 interface AuthFormProps {
   mode: "login" | "register";
 }
@@ -28,7 +30,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
-
+  const { turnstileRef, turnstileToken, setTurnstileToken, resetTurnstile } =
+    useTurnstile();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<{
@@ -129,12 +132,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
   const onSubmit = async (data: LoginFormData | SignUpFormData) => {
     try {
+      if (!turnstileToken) {
+        toast.error("Please complete the CAPTCHA challenge.");
+        return;
+      }
       if (isLogin) {
-        await signInWithEmail(data as LoginFormData);
+        await signInWithEmail({ ...data, turnstileToken } as LoginFormData);
       } else {
-        await signUpWithEmail(data as SignUpFormData);
+        await signUpWithEmail({ ...data, turnstileToken } as SignUpFormData);
       }
 
+      resetTurnstile();
       // Redirect to return URL if provided, otherwise go to home page
       const redirectPath = returnUrl || "/";
       router.push(redirectPath);
@@ -468,6 +476,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 <span className="flex-1">{error.error || error.details}</span>
               </div>
             )}
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+              />
+            </div>
 
             {/* Submit Button */}
             <div className="pt-2">

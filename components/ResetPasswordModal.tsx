@@ -11,6 +11,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTurnstile } from "@/hooks/use-turnstile";
+import { Turnstile } from "@marsidev/react-turnstile";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +44,8 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     strength: "weak" | "medium" | "strong" | "very-strong";
     score: number;
   } | null>(null);
+  const { turnstileRef, turnstileToken, setTurnstileToken, resetTurnstile } =
+    useTurnstile();
 
   const {
     register,
@@ -66,17 +70,23 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
+      if (!turnstileToken) {
+        toast.error("Please complete the CAPTCHA challenge.");
+        return;
+      }
       setIsSubmitting(true);
       const result = await resetPassword(
         token,
         data.password,
         data.confirm_password,
+        turnstileToken,
       );
 
       if (result.success) {
         setIsSuccess(true);
         toast.success("Password reset successful!");
         reset();
+        resetTurnstile();
         // Redirect to login after 2 seconds
         setTimeout(() => {
           handleClose();
@@ -84,9 +94,11 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         }, 2000);
       } else {
         toast.error(result.error || "Failed to reset password");
+        resetTurnstile();
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -288,6 +300,17 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                   {errors.confirm_password.message}
                 </p>
               )}
+            </div>
+
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+              />
             </div>
 
             {/* Action Buttons */}

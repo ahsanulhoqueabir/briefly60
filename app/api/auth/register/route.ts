@@ -1,15 +1,29 @@
+import { verifyTurnstile } from "@/lib/turnstile";
 import { AuthService } from "@/services/auth.services";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, confirm_password } = await req.json();
+    const { email, password, name, confirm_password, turnstileToken } =
+      await req.json();
 
-    if (!email || !password) {
+    if (!email || !password || !turnstileToken) {
       return NextResponse.json(
         {
           success: false,
-          error: "Email and password are required",
+          error: "Email, password, and CAPTCHA token are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    const isTurnstileValid = await verifyTurnstile(turnstileToken);
+
+    if (!isTurnstileValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "CAPTCHA verification failed",
         },
         { status: 400 },
       );

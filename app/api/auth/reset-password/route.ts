@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { AuthService } from "@/services/auth.services";
 import { resetPasswordSchema } from "@/lib/validation";
 import { ZodError } from "zod";
@@ -10,6 +11,29 @@ import { ZodError } from "zod";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Verify Turnstile token
+    if (!body.turnstileToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "CAPTCHA token is required",
+        },
+        { status: 400 },
+      );
+    }
+
+    const isTurnstileValid = await verifyTurnstile(body.turnstileToken);
+
+    if (!isTurnstileValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "CAPTCHA verification failed",
+        },
+        { status: 400 },
+      );
+    }
 
     // Extract token from request (can be in body or query params)
     const token = body.token || request.nextUrl.searchParams.get("token");
