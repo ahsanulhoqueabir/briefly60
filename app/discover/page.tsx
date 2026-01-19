@@ -2,8 +2,7 @@
 
 import ArticleCard from "@/components/ArticleCard";
 import FilterModal from "@/components/FilterModal";
-import QuizModal from "@/components/QuizModal";
-import { Article, MCQ } from "@/types/news.types";
+import { Article } from "@/types/news.types";
 import { Filter, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -26,10 +25,6 @@ export default function DiscoverPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<{
-    title: string;
-    mcqs: MCQ[];
-  } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Pagination
@@ -146,12 +141,6 @@ export default function DiscoverPage() {
     fetchArticles(nextPage, false);
   };
 
-  const handleQuizOpen = (article: Article) => {
-    if (article.mcqs && article.mcqs.length > 0) {
-      setSelectedQuiz({ title: article.title, mcqs: article.mcqs });
-    }
-  };
-
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
     // Exclude sort options and search from count
     if (key === "sort_by" || key === "sort_order" || key === "search")
@@ -240,8 +229,8 @@ export default function DiscoverPage() {
               {articles.map((article) => (
                 <ArticleCard
                   key={article.id}
+                  id={`article-${article.id}`}
                   article={article}
-                  onQuizClick={() => handleQuizOpen(article)}
                 />
               ))}
             </div>
@@ -261,14 +250,6 @@ export default function DiscoverPage() {
           </>
         )}
       </div>
-      {/* Quiz Modal */}
-      {selectedQuiz && (
-        <QuizModal
-          isOpen={!!selectedQuiz}
-          mcqs={selectedQuiz.mcqs}
-          onClose={() => setSelectedQuiz(null)}
-        />
-      )}
     </div>
   );
 }

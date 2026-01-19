@@ -26,7 +26,7 @@ export async function authMiddleware(request: NextRequest): Promise<{
             message: "Authentication required",
             error: "MISSING_TOKEN",
           },
-          { status: 401 }
+          { status: 401 },
         ),
       };
     }
@@ -46,7 +46,7 @@ export async function authMiddleware(request: NextRequest): Promise<{
             message: validationResult.error || "Invalid or expired token",
             error: "INVALID_TOKEN",
           },
-          { status: 401 }
+          { status: 401 },
         ),
       };
     }
@@ -65,7 +65,7 @@ export async function authMiddleware(request: NextRequest): Promise<{
           message: "Authentication failed",
           error: "AUTH_ERROR",
         },
-        { status: 500 }
+        { status: 500 },
       ),
     };
   }
@@ -75,7 +75,7 @@ export async function authMiddleware(request: NextRequest): Promise<{
  * Higher-order function that wraps API routes with authentication
  */
 export function withAuth(
-  handler: (request: NextRequest, user: JwtPayload) => Promise<NextResponse>
+  handler: (request: NextRequest, user: JwtPayload) => Promise<NextResponse>,
 ) {
   return async (request: NextRequest) => {
     const authResult = await authMiddleware(request);
@@ -98,8 +98,8 @@ export function withRole(
     request: NextRequest,
     user: JwtPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    context?: any
-  ) => Promise<NextResponse>
+    context?: any,
+  ) => Promise<NextResponse>,
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (request: NextRequest, context?: any) => {
@@ -119,7 +119,7 @@ export function withRole(
           requiredRoles: allowedRoles,
           userRole: authResult.user.role,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -128,15 +128,15 @@ export function withRole(
 }
 
 /**
- * Check if user has admin access (admin or superadmin)
+ * Check if user has admin access
  */
 export function withAdmin(
   handler: (
     request: NextRequest,
     user: JwtPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    context?: any
-  ) => Promise<NextResponse>
+    context?: any,
+  ) => Promise<NextResponse>,
 ) {
   return withRole(["admin", "superadmin"], handler);
 }
@@ -149,8 +149,8 @@ export function withSuperAdmin(
     request: NextRequest,
     user: JwtPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    context?: any
-  ) => Promise<NextResponse>
+    context?: any,
+  ) => Promise<NextResponse>,
 ) {
   return withRole(["superadmin"], handler);
 }
@@ -163,8 +163,22 @@ export function withEditor(
     request: NextRequest,
     user: JwtPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    context?: any
-  ) => Promise<NextResponse>
+    context?: any,
+  ) => Promise<NextResponse>,
 ) {
   return withRole(["editor", "admin", "superadmin"], handler);
+}
+
+/**
+ * Check if user is authenticated (any role)
+ */
+export function withUser(
+  handler: (
+    request: NextRequest,
+    user: JwtPayload,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context?: any,
+  ) => Promise<NextResponse>,
+) {
+  return withRole(["user", "editor", "admin", "superadmin"], handler);
 }

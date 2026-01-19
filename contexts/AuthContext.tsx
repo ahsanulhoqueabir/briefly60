@@ -31,6 +31,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const refreshUser = async () => {
+    const token = LocalStorageService.getAuthToken();
+    if (!token) return;
+
+    try {
+      const data = await fetch("/api/auth/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => res.json());
+
+      if (data.success && data.user) {
+        setAuthState((prev) => ({
+          ...prev,
+          user: data.user,
+        }));
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
+  };
+
   useEffect(() => {
     // Check if user is logged in from localStorage
     const checkAuth = async () => {
@@ -201,6 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     clearError,
     isAuthenticated,
+    refreshUser,
   };
 
   return (

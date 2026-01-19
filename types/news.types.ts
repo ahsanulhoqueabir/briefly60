@@ -13,19 +13,6 @@ export interface MCQ {
 }
 
 /**
- * Base article metadata fields
- */
-export interface ArticleMetadata {
-  id: string;
-  status: ArticleStatus;
-  sort: number | null;
-  user_created: string;
-  date_created: string;
-  user_updated: string;
-  date_updated: string;
-}
-
-/**
  * Article source information
  */
 export interface ArticleSource {
@@ -40,6 +27,7 @@ export interface ArticleContent {
   title: string;
   corrected_title?: string;
   content: string;
+  description?: string;
   banner?: string;
   published_at: string;
 }
@@ -58,48 +46,52 @@ export interface ArticleSummaries {
 export interface ArticleClassification {
   category: string;
   importance: number;
-  keywords: string[];
+  keywords?: string[];
+/**
+ * Article classification fields
+ */
+export interface ArticleClassification {
+  status: ArticleStatus;
+  category: string;
+  importance: number;
+  keywords?: string[];
   clickbait_score: number;
-  clickbait_reason: string;
+  clickbait_reason?: string;
 }
 
 /**
- * Complete article from Directus b60_articles collection
+ * Complete article from MongoDB
  */
 export interface Article
-  extends ArticleMetadata,
-    ArticleSource,
+  extends ArticleSource,
     ArticleContent,
     ArticleSummaries,
     ArticleClassification {
-  mcqs?: MCQ[];
+  _id: string;
+  quiz_questions?: MCQ[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
- * Article creation payload (required fields only)
+ * Article creation payload
  */
 export interface CreateArticlePayload
-  extends Partial<
-    Omit<
-      Article,
-      "id" | "user_created" | "date_created" | "user_updated" | "date_updated"
-    >
-  > {
+  extends Partial<Omit<Article, "_id" | "createdAt" | "updatedAt">> {
   title: string;
+  content: string;
+  source_name: string;
+  source_url: string;
+  category: string;
+  summary_60_bn: string;
+  summary_60_en: string;
 }
 
 /**
- * Article update payload (all fields optional except id)
+ * Article update payload
  */
 export interface UpdateArticlePayload
-  extends Partial<
-    Omit<
-      Article,
-      "id" | "user_created" | "date_created" | "user_updated" | "date_updated"
-    >
-  > {
-  id: string;
-}
+  extends Partial<Omit<Article, "_id" | "createdAt" | "updatedAt">> {}
 
 /**
  * Article query filters

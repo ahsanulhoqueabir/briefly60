@@ -13,13 +13,19 @@ import {
   Volume2,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import SoundWave from "./SoundWave";
+import AuthRequired from "./AuthRequired";
+import QuizModal from "./QuizModal";
+import { useAuth } from "@/contexts/AuthContext";
+import usePrivateAxios from "@/hooks/use-private-axios";
+import { useBookmark } from "@/hooks/useBookmark";
 
 interface ArticleCardProps {
   article: Article;
-  onQuizClick: () => void;
+  id?: string;
 }
 
 const validUrl = (url: string): boolean => {
@@ -31,13 +37,14 @@ const validUrl = (url: string): boolean => {
   }
 };
 
-export default function ArticleCard({
-  article,
-  onQuizClick,
-}: ArticleCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
+export default function ArticleCard({ article, id }: ArticleCardProps) {
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const { user, refreshUser } = useAuth();
+  const axios = usePrivateAxios();
+  const { isBookmarked } = useBookmark(article._id);
 
   // Text-to-Speech hook for the summary
   const {
@@ -57,9 +64,37 @@ export default function ArticleCard({
     pitch: 1,
   });
 
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // TODO: Implement bookmark functionality
+  const handleBookmark = async () => {
+    if (isBookmarkLoading) return;
+
+    setIsBookmarkLoading(true);
+    try {
+      const response = await axios.post("/api/bookmark", {
+        news: article._id,
+      });
+
+      if (response.data.success) {
+        await refreshUser();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Error handling bookmark:", error);
+      alert(
+        error?.response?.data?.message ||
+          "বুকমার্ক প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+      );
+    } finally {
+      setIsBookmarkLoading(false);
+    }
+  };
+
+  const handleQuizClick = () => {
+    // This will only be called if user is authenticated (due to AuthRequired wrapper)
+    setShowQuizModal(true);
+  };
+
+  const handleQuizClose = () => {
+    setShowQuizModal(false);
   };
 
   const handleAudioPlay = () => {
@@ -102,7 +137,7 @@ export default function ArticleCard({
       } else {
         // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(
-          `${article.title}\n\n${article.summary_60_bn}\n\n${article.source_url}`
+          `${article.title}\n\n${article.summary_60_bn}\n\n${article.source_url}`,
         );
         alert("লিংক কপি করা হয়েছে!");
       }
@@ -137,22 +172,26 @@ export default function ArticleCard({
   return (
     <article className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
       {/* Banner Image */}
-      <div className="relative w-full h-48 bg-muted shrink-0">
-        <Image
-          src={imageSrc}
-          alt={article.title}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImageError(true)}
-        />
-      </div>
+      <Link href={`/article/${article._id}`}>
+        <div className="relative w-full h-48 bg-muted shrink-0 cursor-pointer">
+          <Image
+            src={imageSrc}
+            alt={article.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageError(true)}
+          />
+        </div>
+      </Link>
 
       <div className="p-4 flex flex-col grow">
         {/* Title */}
-        <h2 className="text-lg font-bold text-primary mb-2 ">
-          {article.title}
-        </h2>
+        <Link href={`/article/${article._id}`}>
+          <h2 className="text-lg font-bold text-primary mb-2 hover:underline cursor-pointer">
+            {article.title}
+          </h2>
+        </Link>
 
         {/* Corrected Title (if clickbait score > 3) */}
         {showCorrectedTitle && (
@@ -212,8 +251,8 @@ export default function ArticleCard({
                       isPaused
                         ? "Resume audio"
                         : isPlaying
-                        ? "Pause audio"
-                        : "Play audio"
+                          ? "Pause audio"
+                          : "Play audio"
                     }
                   >
                     {isPaused ? (
@@ -244,30 +283,37 @@ export default function ArticleCard({
               )}
 
               {/* Quiz Button (only if MCQs exist) */}
-              {article.mcqs && article.mcqs.length > 0 && (
-                <button
-                  onClick={onQuizClick}
-                  className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
-                  aria-label="Take quiz"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                </button>
+              {article.quiz_questions && article.quiz_questions.length > 0 && (
+                <AuthRequired referenceId={id || `article-${article._id}`}>
+                  <button
+                    onClick={handleQuizClick}
+                    className="flex items-center justify-center w-9 h-9 bg-secondary text-secondary-foreground rounded hover:opacity-90 transition-opacity"
+                    aria-label="Take quiz"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </button>
+                </AuthRequired>
               )}
 
               {/* Bookmark Button */}
-              <button
-                onClick={handleBookmark}
-                className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
-                  isBookmarked
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:opacity-90"
-                }`}
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-              >
-                <Bookmark
-                  className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
-                />
-              </button>
+              <AuthRequired referenceId={id || `article-${article._id}`}>
+                <button
+                  onClick={handleBookmark}
+                  disabled={isBookmarkLoading}
+                  className={`flex items-center justify-center w-9 h-9 rounded transition-all ${
+                    isBookmarked
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:opacity-90"
+                  } ${
+                    isBookmarkLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                >
+                  <Bookmark
+                    className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
+                  />
+                </button>
+              </AuthRequired>
 
               {/* Share Button */}
               <button
@@ -293,6 +339,19 @@ export default function ArticleCard({
           </div>
         </div>
       </div>
+
+      {/* Quiz Modal */}
+      {user &&
+        showQuizModal &&
+        article.quiz_questions &&
+        article.quiz_questions.length > 0 && (
+          <QuizModal
+            isOpen={showQuizModal}
+            onClose={handleQuizClose}
+            mcqs={article.quiz_questions}
+            newsId={article._id}
+          />
+        )}
     </article>
   );
 }
