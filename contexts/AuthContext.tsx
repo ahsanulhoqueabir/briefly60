@@ -142,7 +142,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: data.email, password: data.password }),
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          turnstileToken: data.turnstileToken,
+        }),
       });
 
       const result = await response.json();
@@ -186,6 +190,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: data.email,
           password: data.password,
           confirm_password: data.confirm_password,
+          turnstileToken: data.turnstileToken,
         }),
       });
 
@@ -246,7 +251,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState((prev) => ({ ...prev, error: {} }));
   };
 
-  const forgotPassword = async (email: string) => {
+  const forgotPassword = async (email: string, turnstileToken: string) => {
     try {
       setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
 
@@ -255,7 +260,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
 
       const result = await response.json();
@@ -294,6 +299,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token: string,
     password: string,
     confirmPassword: string,
+    turnstileToken: string,
   ) => {
     try {
       setAuthState((prev) => ({ ...prev, loading: true, error: {} }));
@@ -307,6 +313,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           token,
           password,
           confirm_password: confirmPassword,
+          turnstileToken,
         }),
       });
 

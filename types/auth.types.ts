@@ -1,11 +1,13 @@
 export interface LoginPayload {
   email: string;
   password: string;
+  turnstileToken?: string;
 }
 
 export interface SignUpPayload extends LoginPayload {
   name: string;
   confirm_password: string;
+  turnstileToken?: string;
 }
 
 export interface ForgotPasswordPayload {
@@ -68,11 +70,13 @@ export interface AuthContextType extends AuthState {
   refreshUser: () => Promise<void>;
   forgotPassword: (
     email: string,
+    turnstileToken: string,
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
   resetPassword: (
     token: string,
     password: string,
     confirmPassword: string,
+    turnstileToken: string,
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
   updateLanguagePreference: (
     language: "bn" | "en",

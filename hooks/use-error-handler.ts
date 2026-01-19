@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { useError } from "@/contexts/ErrorContext";
-import { toast } from "sonner";
 
 interface UseErrorHandlerOptions {
   showToast?: boolean;
