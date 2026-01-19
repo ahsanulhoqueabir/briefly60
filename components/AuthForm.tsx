@@ -189,7 +189,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             {!isLogin && (
               <div className="space-y-2">
                 <label
-                  htmlFor="first_name"
+                  htmlFor="name"
                   className="block text-sm font-medium text-foreground"
                 >
                   Name
@@ -199,22 +199,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                     <User className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input
-                    id="first_name"
+                    id="name"
                     type="text"
-                    {...signUpForm.register("first_name")}
+                    {...signUpForm.register("name")}
                     className={cn(
                       "appearance-none block w-full pl-10 pr-3 py-2.5 bg-background border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm transition-all duration-200",
-                      signUpForm.formState.errors.first_name
+                      signUpForm.formState.errors.name
                         ? "border-red-500 focus:ring-red-500"
                         : "border-input hover:border-blue-400",
                     )}
                     placeholder="Enter your name"
                   />
                 </div>
-                {signUpForm.formState.errors.first_name && (
+                {signUpForm.formState.errors.name && (
                   <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
                     <AlertCircle className="h-4 w-4 shrink-0" />
-                    {signUpForm.formState.errors.first_name.message}
+                    {signUpForm.formState.errors.name.message}
                   </p>
                 )}
               </div>

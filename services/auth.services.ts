@@ -125,7 +125,7 @@ export class AuthService {
       const newUser = await User.create({
         email: data.email,
         password: hashedPassword,
-        name: data.first_name,
+        name: data.name,
         rbac: "user",
       });
 

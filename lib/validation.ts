@@ -40,7 +40,7 @@ export type LoginFormData = z.infer<typeof loginSchema>;
  */
 export const signUpSchema = z
   .object({
-    first_name: z
+    name: z
       .string()
       .min(2, "Name must be at least 2 characters")
       .max(100, "Name must be less than 100 characters")
@@ -114,7 +114,7 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
  * Update Profile Schema
  */
 export const updateProfileSchema = z.object({
-  first_name: z
+  name: z
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
@@ -147,7 +147,7 @@ export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
  */
 export const adminCreateUserSchema = z
   .object({
-    first_name: z
+    name: z
       .string()
       .min(2, "Name must be at least 2 characters")
       .max(100, "Name must be less than 100 characters")

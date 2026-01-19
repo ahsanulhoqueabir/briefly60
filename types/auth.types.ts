@@ -4,7 +4,7 @@ export interface LoginPayload {
 }
 
 export interface SignUpPayload extends LoginPayload {
-  first_name: string;
+  name: string;
   confirm_password: string;
 }
 
@@ -25,13 +25,18 @@ export interface Subscription {
 export interface User {
   id: string;
   email: string;
-  first_name: string;
+  name: string;
   image?: string;
   plan: Plan;
   rbac?: UserRole;
   subscriptions?: Subscription[];
   bookmarkedNewsIds?: string[]; // Array of news IDs that the user has bookmarked
   quizzes?: string[];
+  preferences?: {
+    language?: string;
+    notifications?: boolean;
+    theme?: "light" | "dark";
+  };
 }
 
 export interface AuthState {

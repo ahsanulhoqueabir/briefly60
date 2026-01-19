@@ -21,7 +21,7 @@ export class AdminUserService {
     return {
       id: user._id.toString(),
       email: user.email,
-      first_name: user.name, // Map name to first_name for compatibility
+      name: user.name,
       plan: "free" as const, // Default plan - you might want to add this field to User model
       image: user.image || undefined,
       rbac: user.rbac,
@@ -166,15 +166,15 @@ export class AdminUserService {
    */
   static async updateUser(
     id: string,
-    data: Partial<Pick<AdminUser, "first_name" | "email" | "rbac">>,
+    data: Partial<Pick<AdminUser, "name" | "email" | "rbac">>,
   ): Promise<AdminApiResponse<AdminUser | null>> {
     try {
       await dbConnect();
 
-      // Map first_name back to name for the User model
+      // Build update data
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {};
-      if (data.first_name) updateData.name = data.first_name;
+      if (data.name) updateData.name = data.name;
       if (data.email) updateData.email = data.email;
       if (data.rbac) updateData.rbac = data.rbac;
 
