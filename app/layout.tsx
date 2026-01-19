@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ErrorProvider } from "@/contexts/ErrorContext";
+import { ArticlesProvider } from "@/contexts/ArticlesContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { Toaster } from "sonner";
@@ -71,13 +72,15 @@ export default function RootLayout({
           <ErrorProvider>
             <ThemeProvider>
               <AuthProvider>
-                <LayoutWrapper>{children}</LayoutWrapper>
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    className: "bg-background text-foreground border",
-                  }}
-                />
+                <ArticlesProvider>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                  <Toaster
+                    position="top-right"
+                    toastOptions={{
+                      className: "bg-background text-foreground border",
+                    }}
+                  />
+                </ArticlesProvider>
               </AuthProvider>
             </ThemeProvider>
           </ErrorProvider>
