@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:init": "tsx scripts/init-db.ts",
     "db:import-articles": "tsx scripts/import-articles.ts",
-    "db:migrate-subscriptions": "tsx scripts/migrate-subscriptions.ts"
+    "db:seed-plans": "tsx scripts/seed-subscription-plans.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -35,7 +35,7 @@ export interface User {
   preferences?: {
     language?: string;
     notifications?: boolean;
-    theme?: "light" | "dark";
+    theme?: "light" | "dark" | "system";
   };
 }
 

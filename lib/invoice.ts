@@ -1,4 +1,3 @@
-import { SUBSCRIPTION_PLANS } from "@/lib/subscription-constants";
 import { UserSubscriptionStatus } from "@/types/subscription.types";
 
 export async function generateInvoicePDF(
@@ -20,15 +19,8 @@ export async function generateInvoicePDF(
   const darkGray: [number, number, number] = [51, 65, 85];
 
   const invoiceId = `INV-${Date.now().toString().slice(-8)}`;
-  const planObj = SUBSCRIPTION_PLANS.find(
-    (p) => p.id === subscription_status.subscription?.plan,
-  );
-  const planName =
-    planObj?.name_en ||
-    planObj?.name ||
-    subscription_status.subscription?.plan ||
-    "Subscription";
-  const price = planObj?.price ?? 0;
+  const planName = subscription_status.subscription?.plan || "Subscription";
+  const price = subscription_status.subscription?.amount ?? 0;
   const startDate = subscription_status.subscription?.start_date
     ? (subscription_status.subscription.start_date instanceof Date
         ? subscription_status.subscription.start_date

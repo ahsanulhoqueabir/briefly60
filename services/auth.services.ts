@@ -79,7 +79,7 @@ export class AuthService {
           image: userResponse.image,
           rbac: userResponse.rbac,
           preferences: userResponse.preferences,
-          plan: activeSubscription?.plan || "free",
+          plan: activeSubscription?.plan_snapshot.plan_id || "free",
           bookmarkedNewsIds,
         },
         token,
@@ -127,15 +127,6 @@ export class AuthService {
         password: hashedPassword,
         name: data.name,
         rbac: "user",
-      });
-
-      // Create free subscription for the user
-      await Subscription.create({
-        user_id: newUser._id,
-        plan: "free",
-        start_date: new Date(),
-        is_active: true,
-        description: "Free plan - Default subscription",
       });
 
       // Prepare user data for token
@@ -219,7 +210,7 @@ export class AuthService {
           image: userResponse.image,
           rbac: userResponse.rbac,
           preferences: userResponse.preferences,
-          plan: activeSubscription?.plan || "free",
+          plan: activeSubscription?.plan_snapshot.plan_id || "free",
           bookmarkedNewsIds, // Array of news IDs that user has bookmarked
         },
       };

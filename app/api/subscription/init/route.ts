@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { sslcommerzService } from "@/services/sslcommerz.services";
 import { subscriptionService } from "@/services/subscription.services";
-import { getPlanById } from "@/lib/subscription-constants";
+import { SubscriptionPlanService } from "@/services/subscription-plan.service";
 import { sslcommerzConfig } from "@/config/env";
 import { withUser } from "@/middleware/verify-auth";
 import User from "@/models/User.model";
@@ -43,20 +43,20 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
 
     // Parse request body
     const body = await req.json();
-    const { plan } = body;
+    const { plan_id, auto_renew = false } = body;
 
-    if (!plan || plan === "free") {
+    if (!plan_id) {
       return NextResponse.json(
         { success: false, error: "Invalid plan selected" },
         { status: 400 },
       );
     }
 
-    // Get plan details
-    const planDetails = getPlanById(plan);
-    if (!planDetails) {
+    // Get plan details from database
+    const plan = await SubscriptionPlanService.getActivePlanByPlanId(plan_id);
+    if (!plan) {
       return NextResponse.json(
-        { success: false, error: "Plan not found" },
+        { success: false, error: "Plan not found or inactive" },
         { status: 404 },
       );
     }
@@ -67,9 +67,10 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
     // Create pending subscription
     const subscription = await subscriptionService.createPendingSubscription(
       user_id,
-      plan,
+      plan_id,
       transaction_id,
-      planDetails.price,
+      plan.price,
+      auto_renew,
     );
 
     if (!subscription) {
@@ -81,14 +82,14 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
 
     // Prepare payment data
     const paymentData = sslcommerzService.sanitizePaymentData({
-      total_amount: planDetails.price,
-      currency: "BDT",
+      total_amount: plan.price,
+      currency: plan.currency,
       tran_id: transaction_id,
       success_url: sslcommerzConfig.successUrl,
       fail_url: sslcommerzConfig.failUrl,
       cancel_url: sslcommerzConfig.cancelUrl,
       ipn_url: sslcommerzConfig.ipnUrl,
-      product_name: `Briefly60 - ${planDetails.name}`,
+      product_name: `Briefly60 - ${plan.name}`,
       product_category: "subscription",
       product_profile: "general",
       cus_name: user.name,
@@ -101,8 +102,8 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
       shipping_method: "NO",
       num_of_item: 1,
       value_a: user_id, // Store user ID
-      value_b: plan, // Store plan type
-      value_c: planDetails.duration_months.toString(), // Store duration
+      value_b: plan_id, // Store plan_id
+      value_c: auto_renew.toString(), // Store auto_renew preference
       value_d: Date.now().toString(), // Store timestamp
     });
 

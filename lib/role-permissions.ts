@@ -15,6 +15,7 @@ export type Permission =
   | "change_user_role"
   | "view_categories"
   | "manage_categories"
+  | "manage_subscriptions"
   | "view_stats"
   | "view_own_profile"
   | "view_own_bookmarks";
@@ -39,6 +40,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     "change_user_role",
     "view_categories",
     "manage_categories",
+    "manage_subscriptions",
     "view_stats",
     "view_own_profile",
     "view_own_bookmarks",
@@ -58,6 +60,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     // Note: admin cannot change_user_role
     "view_categories",
     "manage_categories",
+    "manage_subscriptions",
     "view_stats",
     "view_own_profile",
     "view_own_bookmarks",

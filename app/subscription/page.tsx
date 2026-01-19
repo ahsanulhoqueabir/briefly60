@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { SUBSCRIPTION_PLANS } from "@/lib/subscription-constants";
 import { generateInvoicePDF } from "@/lib/invoice";
 import { useSubscription, useSubscriptionInit } from "@/hooks/use-subscription";
+import { SubscriptionPlan } from "@/types/subscription-plan.types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +16,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   CheckCircle2,
   XCircle,
@@ -24,6 +26,7 @@ import {
   Sparkles,
   Calendar,
   CreditCard,
+  RefreshCw,
 } from "lucide-react";
 
 function SubscriptionContent() {
@@ -41,17 +44,20 @@ function SubscriptionContent() {
   } = useSubscriptionInit();
 
   const [selected_plan, setSelectedPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [plans_loading, setPlansLoading] = useState(true);
+  const [auto_renew, setAutoRenew] = useState(false);
+
   // Initialize alert message from URL params
   const status = searchParams.get("status");
   const message = searchParams.get("message");
-  const plan = searchParams.get("plan");
 
   const initial_alert_message = status
     ? status === "success"
       ? {
           type: "success" as const,
           title: "Subscription Successful!",
-          message: `Your ${plan ? SUBSCRIPTION_PLANS.find((p) => p.id === plan)?.name : "subscription"} has been activated successfully.`,
+          message: `Your subscription has been activated successfully.`,
         }
       : status === "failed"
         ? {
@@ -76,6 +82,38 @@ function SubscriptionContent() {
   } | null>(initial_alert_message);
 
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
+  // Fetch subscription plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setPlansLoading(true);
+        const response = await fetch("/api/subscription/plans");
+        const data = await response.json();
+
+        if (data.success && data.plans) {
+          setPlans(data.plans);
+        } else {
+          setAlertMessage({
+            type: "error",
+            title: "Failed to Load Plans",
+            message: "Could not fetch subscription plans. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+        setAlertMessage({
+          type: "error",
+          title: "Error",
+          message: "Failed to load subscription plans.",
+        });
+      } finally {
+        setPlansLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   const generateInvoice = async () => {
     if (!subscription_status?.subscription) {
@@ -124,7 +162,7 @@ function SubscriptionContent() {
     }
 
     setSelectedPlan(planId);
-    const result = await initializePayment(planId);
+    const result = await initializePayment(planId, auto_renew);
 
     if (!result.success) {
       setAlertMessage({
@@ -136,7 +174,7 @@ function SubscriptionContent() {
     }
   };
 
-  if (status_loading) {
+  if (status_loading || plans_loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="text-center mb-12">
@@ -217,11 +255,7 @@ function SubscriptionContent() {
                   Current Plan
                 </p>
                 <p className="text-xl font-bold">
-                  {
-                    SUBSCRIPTION_PLANS.find(
-                      (p) => p.id === subscription_status.subscription?.plan,
-                    )?.name
-                  }
+                  {subscription_status.subscription?.plan_name || "-"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -249,6 +283,14 @@ function SubscriptionContent() {
                 </p>
               </div>
             </div>
+            {subscription_status.subscription?.auto_renew && (
+              <div className="flex items-center gap-2 mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Auto-renewal is enabled for this subscription
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardFooter>
             <div className="w-full">
@@ -278,103 +320,133 @@ function SubscriptionContent() {
 
       {/* Subscription Plans - Only show if no active subscription */}
       {!subscription_status?.has_active_subscription && (
-        <div className="grid md:grid-cols-3 gap-8">
-          {SUBSCRIPTION_PLANS.map((plan) => (
-            <Card
-              key={plan.id}
-              className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-                plan.popular
-                  ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
-                  : "hover:border-primary/50"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
-                    ⭐ Most Popular
-                  </Badge>
+        <>
+          {/* Auto-Renewal Toggle */}
+          <Card className="mb-8 border-2 shadow-md">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-renew" className="text-base font-medium">
+                    Enable Auto-Renewal
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically renew your subscription when it expires
+                  </p>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="auto-renew"
+                    checked={auto_renew}
+                    onCheckedChange={setAutoRenew}
+                  />
+                  <RefreshCw
+                    className={`w-4 h-4 ${auto_renew ? "text-primary" : "text-muted-foreground"}`}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-              <CardHeader className="pb-8">
-                <CardTitle className="text-2xl font-bold">
-                  {plan.name_en}
-                </CardTitle>
-                <div className="mt-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                      ৳{plan.price}
-                    </span>
-                    {plan.original_price && (
-                      <span className="text-xl line-through text-muted-foreground">
-                        ৳{plan.original_price}
+          <div className="grid md:grid-cols-3 gap-8">
+            {plans.map((plan) => (
+              <Card
+                key={plan._id}
+                className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                  plan.popular
+                    ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
+                    : "hover:border-primary/50"
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                    <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
+                      ⭐ Most Popular
+                    </Badge>
+                  </div>
+                )}
+
+                <CardHeader className="pb-8">
+                  <CardTitle className="text-2xl font-bold">
+                    {plan.name}
+                  </CardTitle>
+                  <div className="mt-4">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                        ৳{plan.price}
                       </span>
+                      {plan.original_price && (
+                        <span className="text-xl line-through text-muted-foreground">
+                          ৳{plan.original_price}
+                        </span>
+                      )}
+                    </div>
+                    {plan.savings && (
+                      <Badge
+                        variant="secondary"
+                        className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                      >
+                        💰 {plan.savings}
+                      </Badge>
                     )}
                   </div>
-                  {plan.savings && (
-                    <Badge
-                      variant="secondary"
-                      className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                    >
-                      💰 {plan.savings}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className="space-y-6">
-                <ul className="space-y-3">
-                  {plan.features_en?.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
-                      </div>
-                      <span className="text-sm leading-relaxed">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <CardContent className="space-y-6">
+                  <ul className="space-y-3">
+                    {plan.features?.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+                        </div>
+                        <span className="text-sm leading-relaxed">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
 
-                <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Valid for {plan.duration_months}{" "}
-                  {plan.duration_months === 1 ? "month" : "months"}
-                </div>
-              </CardContent>
+                  <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Valid for {plan.duration_months}{" "}
+                    {plan.duration_months === 1 ? "month" : "months"}
+                  </div>
+                </CardContent>
 
-              <CardFooter className="pt-6">
-                <Button
-                  className={`w-full transition-all ${
-                    plan.popular
-                      ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
-                      : ""
-                  }`}
-                  size="lg"
-                  variant={plan.popular ? "default" : "outline"}
-                  onClick={() => handleSubscribe(plan.id)}
-                  disabled={
-                    payment_loading ||
-                    subscription_status?.has_active_subscription ||
-                    selected_plan === plan.id
-                  }
-                >
-                  {payment_loading && selected_plan === plan.id ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Processing...
-                    </>
-                  ) : subscription_status?.has_active_subscription ? (
-                    "Subscribed"
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Subscribe Now
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                <CardFooter className="pt-6">
+                  <Button
+                    className={`w-full transition-all ${
+                      plan.popular
+                        ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
+                        : ""
+                    }`}
+                    size="lg"
+                    variant={plan.popular ? "default" : "outline"}
+                    onClick={() => handleSubscribe(plan.plan_id)}
+                    disabled={
+                      payment_loading ||
+                      subscription_status?.has_active_subscription ||
+                      selected_plan === plan.plan_id
+                    }
+                  >
+                    {payment_loading && selected_plan === plan.plan_id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Processing...
+                      </>
+                    ) : subscription_status?.has_active_subscription ? (
+                      "Subscribed"
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Subscribe Now
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Additional Info - Only show if no active subscription */}

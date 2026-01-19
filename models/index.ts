@@ -6,16 +6,18 @@
 
 import User from "./User.model";
 import Subscription from "./Subscription.model";
+import SubscriptionPlan from "./SubscriptionPlan.model";
 import Bookmark from "./Bookmark.model";
 import Article from "./Article.model";
 import QuizAttempt from "./Quiz.model";
 
 // Export all models
-export { User, Subscription, Bookmark, Article, QuizAttempt };
+export { User, Subscription, SubscriptionPlan, Bookmark, Article, QuizAttempt };
 
 // Export types
 export type { IUser } from "./User.model";
 export type { ISubscription } from "./Subscription.model";
+export type { ISubscriptionPlan } from "./SubscriptionPlan.model";
 export type { IBookmark } from "./Bookmark.model";
 export type { IArticle, IMCQ, ArticleStatus } from "./Article.model";
 export type { IQuizAttempt } from "./Quiz.model";
