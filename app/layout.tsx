@@ -53,9 +53,104 @@ const liPadmasetu = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Briefly60 - News in 60 Words",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com",
+  ),
+  title: {
+    default: "Briefly60 - News in 60 Words",
+    template: "%s | Briefly60",
+  },
   description:
     "Get the latest news from popular newspapers summarized in just 60 words. Stay informed quickly with brief, accurate news summaries.",
+  keywords: [
+    "news",
+    "summarized news",
+    "brief news",
+    "60 words",
+    "daily news",
+    "quick news",
+    "news summary",
+    "newspaper",
+    "current events",
+  ],
+  authors: [{ name: "Briefly60" }],
+  creator: "Briefly60",
+  publisher: "Briefly60",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  // Viewport and mobile optimization
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
+
+  // PWA and mobile
+  manifest: "/site.webmanifest",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Briefly60",
+  },
+
+  // Open Graph
+  openGraph: {
+    type: "website",
+    title: "Briefly60 - News in 60 Words",
+    description:
+      "Get the latest news from popular newspapers summarized in just 60 words. Stay informed quickly with brief, accurate news summaries.",
+    siteName: "Briefly60",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Briefly60 - News in 60 Words",
+      },
+    ],
+    locale: "en_US",
+  },
+
+  // Twitter Card
+  twitter: {
+    card: "summary_large_image",
+    title: "Briefly60 - News in 60 Words",
+    description:
+      "Get the latest news from popular newspapers summarized in just 60 words. Stay informed quickly with brief, accurate news summaries.",
+    images: ["/og-image.png"],
+    creator: "@briefly60",
+    site: "@briefly60",
+  },
+
+  // Verification tags (add your verification codes)
+  verification: {
+    google: "your-google-verification-code",
+    // yandex: "your-yandex-verification-code",
+    // bing: "your-bing-verification-code",
+  },
+
+  // Additional meta tags
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "format-detection": "telephone=no",
+  },
 };
 
 export default function RootLayout({
@@ -65,6 +160,49 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* PWA Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('ServiceWorker registration successful');
+                    },
+                    function(err) {
+                      console.log('ServiceWorker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
+        {/* Schema.org structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Briefly60",
+              url: process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com",
+              description:
+                "Get the latest news from popular newspapers summarized in just 60 words",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || "https://briefly60.com"}/discover?q={search_term_string}`,
+                },
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${blackOpsOne.variable} ${inter.variable} ${liPadmasetu.variable} antialiased bg-background text-foreground min-h-screen font-sans`}
       >
