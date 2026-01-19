@@ -24,6 +24,8 @@ const ImportantNewsBanner: React.FC = () => {
   const [current_slide, set_current_slide] = useState(0);
   const [is_transitioning, set_is_transitioning] = useState(false);
   const [image_errors, set_image_errors] = useState<Set<string>>(new Set());
+  const [touch_start, set_touch_start] = useState(0);
+  const [touch_end, set_touch_end] = useState(0);
 
   useEffect(() => {
     const fetchImportantNews = async () => {
@@ -89,6 +91,33 @@ const ImportantNewsBanner: React.FC = () => {
     set_image_errors((prev) => new Set(prev).add(article_id));
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    set_touch_start(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    set_touch_end(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touch_start || !touch_end) return;
+
+    const distance = touch_start - touch_end;
+    const is_left_swipe = distance > 50;
+    const is_right_swipe = distance < -50;
+
+    if (is_left_swipe) {
+      handleNextSlide();
+    }
+    if (is_right_swipe) {
+      handlePrevSlide();
+    }
+
+    // Reset
+    set_touch_start(0);
+    set_touch_end(0);
+  };
+
   const formatDate = (date_string: string) => {
     const date = new Date(date_string);
     const now = new Date();
@@ -119,7 +148,12 @@ const ImportantNewsBanner: React.FC = () => {
     current_article.banner && !image_errors.has(current_article._id);
 
   return (
-    <div className="relative w-full mb-6 rounded-lg overflow-hidden group">
+    <div
+      className="relative w-full mb-6 rounded-lg overflow-hidden group"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Banner Card */}
       <Link href={`/article/${current_article._id}`}>
         <div className="relative h-64 bg-linear-to-br from-primary/10 via-primary/5 to-background overflow-hidden transition-all duration-500 ease-in-out">
