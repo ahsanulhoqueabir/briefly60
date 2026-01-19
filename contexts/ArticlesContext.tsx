@@ -85,24 +85,50 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
         const response = await fetch("/api/articles?page=1&limit=30");
 
         if (!response.ok) {
-          throw new Error("Failed to fetch articles");
+          // If no cache and first time, don't show error, just show empty state
+          if (articles.length === 0) {
+            throw new Error(
+              "সংবাদ লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।",
+            );
+          }
+          return; // Keep existing articles
         }
 
         const result = await response.json();
 
-        if (result.success && Array.isArray(result.data)) {
+        // Handle different response formats
+        if (result.success === true && Array.isArray(result.data)) {
+          // New format: { success: true, data: [...] }
           if (isMountedRef.current) {
             setArticles(result.data);
             saveToCache(result.data);
           }
+        } else if (Array.isArray(result.data)) {
+          // Format: { data: [...] }
+          if (isMountedRef.current) {
+            setArticles(result.data);
+            saveToCache(result.data);
+          }
+        } else if (Array.isArray(result)) {
+          // Direct array format
+          if (isMountedRef.current) {
+            setArticles(result);
+            saveToCache(result);
+          }
         } else {
-          throw new Error(result.message || "Invalid response format");
+          // Invalid format - but don't crash on first visit
+          console.error("Unexpected response format:", result);
+          if (articles.length === 0) {
+            // First time visit with invalid response, show empty state instead of error
+            setArticles([]);
+          }
         }
       } catch (err) {
         console.error("Fetch articles error:", err);
-        if (isMountedRef.current) {
+        if (isMountedRef.current && articles.length === 0) {
+          // Only show error if no cached articles to display
           setError(
-            err instanceof Error ? err.message : "Failed to fetch articles",
+            err instanceof Error ? err.message : "সংবাদ লোড করতে সমস্যা হয়েছে",
           );
         }
       } finally {

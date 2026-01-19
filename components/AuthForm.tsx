@@ -20,6 +20,9 @@ import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { useTurnstile } from "@/hooks/use-turnstile";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { toast } from "sonner";
+import { turnstileConfig } from "@/config/env";
+import { useTheme } from "@/contexts/ThemeContext";
+
 interface AuthFormProps {
   mode: "login" | "register";
 }
@@ -30,6 +33,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
+  const { theme } = useTheme();
   const { turnstileRef, turnstileToken, setTurnstileToken, resetTurnstile } =
     useTurnstile();
   const [showPassword, setShowPassword] = useState(false);
@@ -132,16 +136,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
   const onSubmit = async (data: LoginFormData | SignUpFormData) => {
     try {
-      if (!turnstileToken) {
+      // Only require Turnstile token if site key is configured
+      if (turnstileConfig.siteKey && !turnstileToken) {
         toast.error("Please complete the CAPTCHA challenge.");
         return;
       }
+
       if (isLogin) {
         const loginData = data as LoginFormData;
         await signInWithEmail({
           email: loginData.email,
           password: loginData.password,
-          turnstileToken,
+          turnstileToken: turnstileToken || undefined,
         });
       } else {
         const signupData = data as SignUpFormData;
@@ -150,11 +156,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           email: signupData.email,
           password: signupData.password,
           confirm_password: signupData.confirm_password,
-          turnstileToken,
+          turnstileToken: turnstileToken || undefined,
         });
       }
 
-      resetTurnstile();
+      if (turnstileRef.current) {
+        resetTurnstile();
+      }
       // Redirect to return URL if provided, otherwise go to home page
       const redirectPath = returnUrl || "/";
       router.push(redirectPath);
@@ -489,14 +497,36 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               </div>
             )}
             {/* Turnstile Widget */}
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => setTurnstileToken(null)}
-                onExpire={() => setTurnstileToken(null)}
-              />
+            <div className="flex justify-center my-4">
+              {turnstileConfig.siteKey ? (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={turnstileConfig.siteKey}
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                  }}
+                  onError={(error) => {
+                    console.error("Turnstile error:", error);
+                    setTurnstileToken(null);
+                    toast.error(
+                      "CAPTCHA verification failed. Please try again.",
+                    );
+                  }}
+                  onExpire={() => {
+                    setTurnstileToken(null);
+                    toast.warning("CAPTCHA expired. Please verify again.");
+                  }}
+                  options={{
+                    theme: theme === "dark" ? "dark" : "light",
+                    size: "normal",
+                  }}
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-lg">
+                  CAPTCHA not configured. Please set
+                  NEXT_PUBLIC_TURNSTILE_SITE_KEY.
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}

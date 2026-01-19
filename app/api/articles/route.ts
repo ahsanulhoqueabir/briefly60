@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const result = await ArticleService.getArticles(options);
 
     if (result.success) {
-      return NextResponse.json(result.data, { status: 200 });
+      return NextResponse.json(result, { status: 200 });
     } else {
       return NextResponse.json(result, { status: 400 });
     }
