@@ -72,7 +72,13 @@ export interface AdminUserFilters {
  * Bulk action types
  */
 export type BulkArticleAction = "delete" | "publish" | "unpublish" | "archive";
-export type BulkUserAction = "activate" | "deactivate" | "ban" | "delete";
+export type BulkUserAction =
+  | "activate"
+  | "deactivate"
+  | "ban"
+  | "delete"
+  | "promote"
+  | "demote";
 
 /**
  * Bulk operation payload
@@ -120,6 +126,8 @@ export interface AdminDashboardStats {
   published_articles: number;
   draft_articles: number;
   total_users: number;
+  admin_users: number;
+  regular_users: number;
   active_users: number;
   articles_today: number;
   users_today: number;
@@ -141,4 +149,6 @@ export interface AdminPaginationMeta {
 export interface AdminApiResponse<T> {
   data: T;
   meta?: AdminPaginationMeta;
+  success: boolean;
+  error?: string;
 }

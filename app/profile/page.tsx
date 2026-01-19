@@ -1,12 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserIcon, Mail, Calendar } from "lucide-react";
+import { UserIcon, Mail, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ProfileEditForm } from "@/components/ProfileEditForm";
 
 const ProfilePage: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
+  const [is_editing, set_is_editing] = useState(false);
 
   if (loading) {
     return (
@@ -37,13 +40,40 @@ const ProfilePage: React.FC = () => {
     return initial || "U";
   };
 
+  const handle_edit_success = async () => {
+    set_is_editing(false);
+    // Refresh user data after successful update
+    if (refreshUser) {
+      await refreshUser();
+    }
+  };
+
+  // Show edit form if editing
+  if (is_editing) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <ProfileEditForm
+          user={user}
+          onSuccess={handle_edit_success}
+          onCancel={() => set_is_editing(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground mt-2">
-          View and manage your account information.
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="text-muted-foreground mt-2">
+            View and manage your account information.
+          </p>
+        </div>
+        <Button onClick={() => set_is_editing(true)} className="gap-2">
+          <Edit className="h-4 w-4" />
+          Edit Profile
+        </Button>
       </div>
 
       <div className="grid gap-6">

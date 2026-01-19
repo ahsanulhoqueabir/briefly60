@@ -295,7 +295,7 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
                         value={field.value}
                       >
                         <FormControl className="flex-1 w-full">
-                          <SelectTrigger>
+                          <SelectTrigger className="h-10">
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
@@ -330,7 +330,7 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
                         value={field.value}
                       >
                         <FormControl className="flex-1 w-full">
-                          <SelectTrigger>
+                          <SelectTrigger className="h-10">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
@@ -394,9 +394,48 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
 
           {/* Banner Image Card */}
           <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Banner Image
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">
+                Banner Image
+              </h3>
+              {form.watch("banner") && (
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      asChild
+                    >
+                      <div>
+                        <Upload className="h-4 w-4" />
+                        <span>Change Image</span>
+                      </div>
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("banner", "");
+                      setBannerBase64("");
+                      setBannerFileName("");
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </div>
             <FormField
               control={form.control}
               name="banner"
@@ -410,51 +449,22 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
                           "relative border-2 border-dashed rounded-lg transition-colors",
                           field.value
                             ? "border-primary/50 bg-primary/5"
-                            : "border-border hover:border-primary/50 hover:bg-accent/50"
+                            : "border-border hover:border-primary/50 hover:bg-accent/50",
                         )}
                       >
                         {field.value ? (
                           // Preview State
-                          <div className="relative group">
-                            <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-lg">
-                              <Image
-                                src={field.value}
-                                alt="Banner preview"
-                                fill
-                                className="object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
-                              />
-                            </div>
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-3">
-                              <label className="cursor-pointer">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                                  <Upload className="h-4 w-4" />
-                                  <span className="text-sm">Change Image</span>
-                                </div>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={handleImageUpload}
-                                  disabled={uploading}
-                                />
-                              </label>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  form.setValue("banner", "");
-                                  setBannerBase64("");
-                                  setBannerFileName("");
-                                }}
-                              >
-                                Remove
-                              </Button>
-                            </div>
+                          <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-lg">
+                            <Image
+                              src={field.value}
+                              alt="Banner preview"
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
+                            />
                           </div>
                         ) : (
                           // Empty State
@@ -556,7 +566,7 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
                               variant="outline"
                               className={cn(
                                 "w-full md:w-auto pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                             >
                               {field.value ? (
@@ -576,7 +586,7 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
                             }
                             onSelect={(date) =>
                               field.onChange(
-                                date ? format(date, "yyyy-MM-dd") : ""
+                                date ? format(date, "yyyy-MM-dd") : "",
                               )
                             }
                             initialFocus
@@ -604,8 +614,8 @@ export default function ArticleForm({ articleId, mode }: ArticleFormProps) {
               {loading
                 ? "Saving..."
                 : mode === "create"
-                ? "Create Article"
-                : "Update Article"}
+                  ? "Create Article"
+                  : "Update Article"}
             </Button>
           </div>
         </form>

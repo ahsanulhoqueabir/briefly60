@@ -49,6 +49,7 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
   );
 
   const withErrorHandling = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <T extends any[], R>(
       fn: (...args: T) => R | Promise<R>,
       errorMessage?: string,

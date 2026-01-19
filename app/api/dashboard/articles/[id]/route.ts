@@ -12,15 +12,25 @@ export const GET = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
-      const article = await AdminArticleService.getArticleById(id);
+      const result = await AdminArticleService.getArticleById(id);
+
+      if (!result.success || !result.data) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: result.error || "Article not found",
+          },
+          { status: 404 },
+        );
+      }
 
       return NextResponse.json({
         success: true,
-        data: article,
+        data: result.data,
       });
     } catch (error) {
       console.error("Error fetching article:", error);
@@ -30,10 +40,10 @@ export const GET = withAdmin(
           message: "Failed to fetch article",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );
 
 /**
@@ -44,7 +54,7 @@ export const PATCH = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
@@ -56,7 +66,7 @@ export const PATCH = withAdmin(
           const imageUrl = await uploadDocumentFromBase64(
             body.bannerBase64,
             "articles",
-            body.bannerFileName || `article_${Date.now()}`
+            body.bannerFileName || `article_${Date.now()}`,
           );
           body.banner = imageUrl;
         } catch (error) {
@@ -66,7 +76,7 @@ export const PATCH = withAdmin(
               success: false,
               message: "Failed to upload image",
             },
-            { status: 500 }
+            { status: 500 },
           );
         }
         // Remove base64 data before saving to DB
@@ -89,10 +99,10 @@ export const PATCH = withAdmin(
           message: "Failed to update article",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );
 
 /**
@@ -103,7 +113,7 @@ export const DELETE = withAdmin(
   async (
     request: NextRequest,
     user: JwtPayload,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> },
   ) => {
     try {
       const { id } = await params;
@@ -121,8 +131,8 @@ export const DELETE = withAdmin(
           message: "Failed to delete article",
           error: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );

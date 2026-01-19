@@ -6,6 +6,7 @@ export class ArticleService {
   /**
    * Create a new article (Admin/Editor only)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async createArticle(data: any) {
     try {
       await connectDB();
@@ -222,6 +223,7 @@ export class ArticleService {
   /**
    * Update an article (Admin/Editor only)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async updateArticle(id: string, data: any) {
     try {
       await connectDB();

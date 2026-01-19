@@ -9,6 +9,9 @@ import {
   User as UserIcon,
   LogIn,
   LayoutDashboard,
+  Bookmark,
+  Brain,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
@@ -23,18 +26,32 @@ const Navbar: React.FC = () => {
   const hasDashboardAccess =
     user?.rbac && ["admin", "superadmin", "editor"].includes(user.rbac);
 
-  const navItems = [
+  // Main navigation items (always visible)
+  const mainNavItems = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Search", href: "/discover", icon: Search },
-    ...(hasDashboardAccess
-      ? [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }]
-      : []),
-    {
-      label: isAuthenticated ? "Profile" : "Login",
-      href: isAuthenticated ? "/profile" : "/auth/login",
-      icon: isAuthenticated ? UserIcon : LogIn,
-    },
+    { label: "Discover", href: "/discover", icon: Search },
   ];
+
+  // User-specific items (only for authenticated users)
+  const userNavItems = isAuthenticated
+    ? [
+        { label: "Bookmarks", href: "/bookmarks", icon: Bookmark },
+        { label: "Quizzes", href: "/quiz-history", icon: Brain },
+        { label: "Subscription", href: "/subscription", icon: CreditCard },
+      ]
+    : [];
+
+  // Dashboard item (only for admin/editor/superadmin)
+  const dashboardItem = hasDashboardAccess
+    ? { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }
+    : null;
+
+  // Profile/Login item
+  const profileItem = {
+    label: isAuthenticated ? "Profile" : "Login",
+    href: isAuthenticated ? "/profile" : "/auth/login",
+    icon: isAuthenticated ? UserIcon : LogIn,
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
@@ -46,30 +63,92 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
+          <div className="hidden md:flex items-center gap-6">
+            {/* Main Navigation */}
+            <div className="flex items-center space-x-2">
+              {mainNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-inter",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* User Navigation (authenticated only) */}
+            {isAuthenticated && userNavItems.length > 0 && (
+              <>
+                <div className="h-6 w-px bg-border" />
+                <div className="flex items-center space-x-2">
+                  {userNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all font-inter",
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Dashboard (admin only) */}
+            {dashboardItem && (
+              <>
+                <div className="h-6 w-px bg-border" />
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  href={dashboardItem.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-inter",
-                    isActive
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all font-inter",
+                    pathname === dashboardItem.href
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
                   )}
                 >
-                  <Icon className="size-4" />
-                  {item.label}
+                  <dashboardItem.icon className="size-4" />
+                  {dashboardItem.label}
                 </Link>
-              );
-            })}
+              </>
+            )}
           </div>
 
           {/* Desktop Right Menu */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-2">
+            <Link
+              href={profileItem.href}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all font-inter",
+                pathname === profileItem.href
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+            >
+              <profileItem.icon className="size-4" />
+              {profileItem.label}
+            </Link>
             <ThemeToggle />
           </div>
 

@@ -4,6 +4,7 @@ export interface AppError {
   type: "error" | "warning" | "info";
   timestamp: Date;
   context?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }
 
@@ -25,6 +26,7 @@ export interface ErrorContextType {
   removeError: (id: string) => void;
   clearErrors: () => void;
   handleError: (error: Error | string, context?: string) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleApiError: (error: any, context?: string) => void;
 }
 
@@ -33,6 +35,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public code?: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public details?: any,
   ) {
     super(message);

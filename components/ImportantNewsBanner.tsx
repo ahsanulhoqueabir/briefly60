@@ -22,6 +22,7 @@ const ImportantNewsBanner: React.FC = () => {
   const [loading, set_loading] = useState(true);
   const [error, set_error] = useState<string | null>(null);
   const [current_slide, set_current_slide] = useState(0);
+  const [is_transitioning, set_is_transitioning] = useState(false);
   const [image_errors, set_image_errors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -59,19 +60,29 @@ const ImportantNewsBanner: React.FC = () => {
 
     const interval = setInterval(() => {
       set_current_slide((prev) => (prev + 1) % important_news.length);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [important_news.length]);
 
   const handlePrevSlide = () => {
-    set_current_slide(
-      (prev) => (prev - 1 + important_news.length) % important_news.length,
-    );
+    if (is_transitioning) return;
+    set_is_transitioning(true);
+    setTimeout(() => {
+      set_current_slide(
+        (prev) => (prev - 1 + important_news.length) % important_news.length,
+      );
+      setTimeout(() => set_is_transitioning(false), 50);
+    }, 300);
   };
 
   const handleNextSlide = () => {
-    set_current_slide((prev) => (prev + 1) % important_news.length);
+    if (is_transitioning) return;
+    set_is_transitioning(true);
+    setTimeout(() => {
+      set_current_slide((prev) => (prev + 1) % important_news.length);
+      setTimeout(() => set_is_transitioning(false), 50);
+    }, 300);
   };
 
   const handleImageError = (article_id: string) => {
@@ -111,7 +122,7 @@ const ImportantNewsBanner: React.FC = () => {
     <div className="relative w-full mb-6 rounded-lg overflow-hidden group">
       {/* Banner Card */}
       <Link href={`/article/${current_article._id}`}>
-        <div className="relative h-64 bg-linear-to-br from-primary/10 via-primary/5 to-background overflow-hidden">
+        <div className="relative h-64 bg-linear-to-br from-primary/10 via-primary/5 to-background overflow-hidden transition-all duration-500 ease-in-out">
           {/* Background Image with Overlay */}
           {has_image && (
             <>
@@ -119,7 +130,10 @@ const ImportantNewsBanner: React.FC = () => {
                 src={current_article.banner!}
                 alt={current_article.title}
                 fill
-                className="object-cover opacity-40"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className={`object-cover transition-opacity duration-500 ease-in-out ${
+                  is_transitioning ? "opacity-0" : "opacity-40"
+                }`}
                 onError={() => handleImageError(current_article._id)}
               />
               <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
@@ -127,7 +141,13 @@ const ImportantNewsBanner: React.FC = () => {
           )}
 
           {/* Content */}
-          <div className="relative h-full flex flex-col justify-end p-6">
+          <div
+            className={`relative h-full flex flex-col justify-end p-6 transition-all duration-500 ease-in-out ${
+              is_transitioning
+                ? "opacity-0 translate-y-4"
+                : "opacity-100 translate-y-0"
+            }`}
+          >
             {/* Badge */}
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1 px-3 py-1 bg-primary/90 text-primary-foreground rounded-full text-xs font-semibold">
@@ -190,7 +210,13 @@ const ImportantNewsBanner: React.FC = () => {
               key={index}
               onClick={(e) => {
                 e.preventDefault();
-                set_current_slide(index);
+                if (!is_transitioning && index !== current_slide) {
+                  set_is_transitioning(true);
+                  setTimeout(() => {
+                    set_current_slide(index);
+                    setTimeout(() => set_is_transitioning(false), 50);
+                  }, 300);
+                }
               }}
               className={`h-1.5 rounded-full transition-all ${
                 index === current_slide

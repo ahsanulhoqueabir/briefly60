@@ -1,13 +1,27 @@
 import { withAdmin } from "@/middleware/verify-auth";
+import { checkPermission } from "@/middleware/role-permission";
 import { AdminUserService } from "@/services/admin-user.service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/dashboard/users - Get users list with filters and pagination
- * Requires: admin or superadmin role
+ * Requires: view_users permission (admin or superadmin)
  */
-export const GET = withAdmin(async (request: NextRequest) => {
+export const GET = async (request: NextRequest) => {
   try {
+    // Check permission
+    const auth = await checkPermission(request, "view_users");
+
+    if (!auth.authorized) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: auth.error || "Access denied",
+        },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     // Parse pagination
@@ -46,10 +60,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
 
     const response = await AdminUserService.getUsers(filters, page, limit);
 
-    return NextResponse.json({
-      success: true,
-      ...response,
-    });
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -58,7 +69,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
         message: "Failed to fetch users",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
-});
+};
