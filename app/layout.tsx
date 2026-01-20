@@ -6,8 +6,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ErrorProvider } from "@/contexts/ErrorContext";
 import { ArticlesProvider } from "@/contexts/ArticlesContext";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import LayoutWrapper from "@/components/LayoutWrapper";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({

@@ -19,7 +19,7 @@ import {
 import { NEWS_CATEGORIES } from "@/lib/constants";
 import { UserPreferences } from "@/types";
 import { cn } from "@/lib/utils";
-import SettingSection from "@/components/SettingSection";
+import SettingSection from "@/components/common/SettingSection";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";

@@ -204,7 +204,8 @@ const MobileBottomNav: React.FC = () => {
                 <span className="text-sm font-medium">Subscription</span>
               </Link>
             </div>
-System Actions */}
+
+            {/* System Actions */}
             <div className="border-t border-border py-2">
               <button
                 onClick={clear_cache}
@@ -217,7 +218,10 @@ System Actions */}
                 <span className="text-sm font-medium">
                   {is_clearing ? "Clearing..." : "Clear Cache"}
                 </span>
-              </button
+              </button>
+            </div>
+
+            {/* Logout */}
             <div className="border-t border-border py-2">
               <button
                 onClick={handleLogout}

@@ -19,8 +19,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Logo from "./Logo";
-import ThemeToggle from "./ThemeToggle";
+import Logo from "@/components/common/Logo";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
-import ArticleCard from "@/components/ArticleCard";
-import FilterModal from "@/components/FilterModal";
+import ArticleCard from "@/components/article/ArticleCard";
+import FilterModal from "@/components/modal/FilterModal";
 import { Article } from "@/types/news.types";
 import { ArrowUp, Filter, Search, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookmarkX, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import AuthRequired from "@/components/AuthRequired";
+import AuthRequired from "@/components/auth/AuthRequired";
 
 const BookmarksPage: React.FC = () => {
   const { user, loading: auth_loading } = useAuth();

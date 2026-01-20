@@ -17,14 +17,14 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import SoundWave from "./SoundWave";
-import SubscriptionRequired from "./SubscriptionRequired";
-import QuizModal from "./QuizModal";
+import SoundWave from "@/components/common/SoundWave";
+import SubscriptionRequired from "@/components/subscription/SubscriptionRequired";
+import QuizModal from "@/components/modal/QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useBookmark } from "@/hooks/useBookmark";
-import ErrorBoundary from "./ErrorBoundary";
-import { CompactErrorFallback } from "./ErrorFallback";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { CompactErrorFallback } from "@/components/common/ErrorFallback";
 
 interface ArticleCardProps {
   article: Article;

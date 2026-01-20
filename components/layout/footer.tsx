@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
-import Logo from "./Logo";
+import Logo from "@/components/common/Logo";
 import { useCacheClear } from "@/hooks/use-cache-clear";
 
 export default function Footer() {

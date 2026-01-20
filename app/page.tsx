@@ -1,9 +1,9 @@
 "use client";
 
-import ArticleCard from "@/components/ArticleCard";
-import ImportantNewsBanner from "@/components/ImportantNewsBanner";
-import ImportantNewsSidebar from "@/components/ImportantNewsSidebar";
-import RefreshIndicator from "@/components/RefreshIndicator";
+import ArticleCard from "@/components/article/ArticleCard";
+import ImportantNewsBanner from "@/components/article/ImportantNewsBanner";
+import ImportantNewsSidebar from "@/components/article/ImportantNewsSidebar";
+import RefreshIndicator from "@/components/common/RefreshIndicator";
 import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
 import { Loader2 } from "lucide-react";
 

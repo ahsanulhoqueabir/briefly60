@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { NewsBrief } from "@/types";
-import NewsCard from "./NewsCard";
+import NewsCard from "@/components/article/NewsCard";
 
 interface NewsSectionProps {
   title: string;
