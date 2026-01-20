@@ -402,6 +402,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Optimistically update bookmarks array without waiting for API refresh
+   * This provides immediate UI feedback
+   */
+  const updateBookmarks = (articleId: string, action: "add" | "remove") => {
+    setAuthState((prev) => {
+      if (!prev.user) return prev;
+
+      const currentBookmarks = prev.user.bookmarkedNewsIds || [];
+      let updatedBookmarks: string[];
+
+      if (action === "add") {
+        // Add bookmark if not already present
+        if (!currentBookmarks.includes(articleId)) {
+          updatedBookmarks = [...currentBookmarks, articleId];
+        } else {
+          updatedBookmarks = currentBookmarks;
+        }
+      } else {
+        // Remove bookmark
+        updatedBookmarks = currentBookmarks.filter((id) => id !== articleId);
+      }
+
+      return {
+        ...prev,
+        user: {
+          ...prev.user,
+          bookmarkedNewsIds: updatedBookmarks,
+        },
+      };
+    });
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     signInWithEmail,
@@ -413,6 +446,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     forgotPassword,
     resetPassword,
     updateLanguagePreference,
+    updateBookmarks,
   };
 
   return (

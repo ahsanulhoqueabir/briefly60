@@ -46,7 +46,7 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   const [imageError, setImageError] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateBookmarks } = useAuth();
   const { has_premium } = useSubscription();
   const axios = usePrivateAxios();
   const { isBookmarked } = useBookmark(article._id);
@@ -96,21 +96,27 @@ function ArticleCard({ article, id }: ArticleCardProps) {
 
     setIsBookmarkLoading(true);
 
+    // Optimistic update - immediately show bookmark change
+    const action = isBookmarked ? "remove" : "add";
+    updateBookmarks(article._id, action);
+
     const success = await handleAsyncError(async () => {
       const response = await axios.post("/api/bookmark", {
         news: article._id,
       });
 
       if (response.data.success) {
-        await refreshUser();
+        // Success - optimistic update was correct
         return true;
       }
       throw new Error("Bookmark operation failed");
     });
 
     if (!success) {
-      // Error already handled by handleAsyncError
-      console.log("Bookmark operation failed");
+      // Error - rollback optimistic update
+      const rollbackAction = action === "add" ? "remove" : "add";
+      updateBookmarks(article._id, rollbackAction);
+      console.log("Bookmark operation failed, rolled back");
     }
 
     setIsBookmarkLoading(false);

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { generateInvoicePDF } from "@/lib/invoice";
 import { useSubscription, useSubscriptionInit } from "@/hooks/use-subscription";
 import { SubscriptionPlan } from "@/types/subscription-plan.types";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,39 +48,50 @@ function SubscriptionContent() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [plans_loading, setPlansLoading] = useState(true);
   const [auto_renew, setAutoRenew] = useState(false);
-
-  // Initialize alert message from URL params
-  const status = searchParams.get("status");
-  const message = searchParams.get("message");
-
-  const initial_alert_message = status
-    ? status === "success"
-      ? {
-          type: "success" as const,
-          title: "Subscription Successful!",
-          message: `Your subscription has been activated successfully.`,
-        }
-      : status === "failed"
-        ? {
-            type: "error" as const,
-            title: "Payment Failed",
-            message:
-              message || "Payment could not be completed. Please try again.",
-          }
-        : status === "cancelled"
-          ? {
-              type: "warning" as const,
-              title: "Payment Cancelled",
-              message: message || "You have cancelled the payment.",
-            }
-          : null
-    : null;
-
   const [alert_message, setAlertMessage] = useState<{
     type: "success" | "error" | "warning" | "info";
     title: string;
     message: string;
-  } | null>(initial_alert_message);
+  } | null>(null);
+  const [params_processed, setParamsProcessed] = useState(false);
+
+  // Process URL params in useEffect to avoid SSR hydration issues
+  useEffect(() => {
+    if (!searchParams || params_processed) return;
+
+    const status = searchParams.get("status");
+    const message = searchParams.get("message");
+
+    if (status) {
+      let alert_msg: typeof alert_message = null;
+
+      if (status === "success") {
+        alert_msg = {
+          type: "success",
+          title: "Subscription Successful!",
+          message: `Your subscription has been activated successfully.`,
+        };
+      } else if (status === "failed") {
+        alert_msg = {
+          type: "error",
+          title: "Payment Failed",
+          message:
+            message || "Payment could not be completed. Please try again.",
+        };
+      } else if (status === "cancelled") {
+        alert_msg = {
+          type: "warning",
+          title: "Payment Cancelled",
+          message: message || "You have cancelled the payment.",
+        };
+      }
+
+      if (alert_msg) {
+        setAlertMessage(alert_msg);
+        setParamsProcessed(true);
+      }
+    }
+  }, [searchParams, params_processed]);
 
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
@@ -89,9 +101,14 @@ function SubscriptionContent() {
       try {
         setPlansLoading(true);
         const response = await fetch("/api/subscription/plans");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        if (data.success && data.plans) {
+        if (data.success && data.plans && Array.isArray(data.plans)) {
           setPlans(data.plans);
         } else {
           setAlertMessage({
@@ -99,14 +116,17 @@ function SubscriptionContent() {
             title: "Failed to Load Plans",
             message: "Could not fetch subscription plans. Please try again.",
           });
+          setPlans([]);
         }
       } catch (error) {
         console.error("Error fetching plans:", error);
         setAlertMessage({
           type: "error",
           title: "Error",
-          message: "Failed to load subscription plans.",
+          message:
+            "Failed to load subscription plans. Please refresh the page.",
         });
+        setPlans([]);
       } finally {
         setPlansLoading(false);
       }
@@ -141,15 +161,23 @@ function SubscriptionContent() {
   };
 
   useEffect(() => {
+    if (!searchParams || !params_processed) return;
+
+    const status = searchParams.get("status");
     if (status === "success") {
+      // Refetch subscription status
       refetch();
-      // Clear URL params after showing message
+      // Clear URL params after showing message (wait longer to ensure state is updated)
       const timer = setTimeout(() => {
-        router.replace("/subscription");
-      }, 100);
+        try {
+          router.replace("/subscription");
+        } catch (error) {
+          console.error("Error clearing URL params:", error);
+        }
+      }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [status, refetch, router]);
+  }, [searchParams, params_processed, refetch, router]);
 
   const handleSubscribe = async (planId: string) => {
     if (subscription_status?.has_active_subscription) {
@@ -348,103 +376,115 @@ function SubscriptionContent() {
           </Card>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan) => (
-              <Card
-                key={plan._id}
-                className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-                  plan.popular
-                    ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
-                    : "hover:border-primary/50"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                    <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
-                      ⭐ Most Popular
-                    </Badge>
-                  </div>
-                )}
+            {plans && plans.length > 0 ? (
+              plans.map((plan) => (
+                <Card
+                  key={plan._id}
+                  className={`relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                    plan.popular
+                      ? "border-2 border-primary shadow-xl md:scale-105 bg-linear-to-br from-primary/5 to-purple-500/5"
+                      : "hover:border-primary/50"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                      <Badge className="bg-linear-to-r from-primary to-purple-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg">
+                        ⭐ Most Popular
+                      </Badge>
+                    </div>
+                  )}
 
-                <CardHeader className="pb-8">
-                  <CardTitle className="text-2xl font-bold">
-                    {plan.name}
-                  </CardTitle>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                        ৳{plan.price}
-                      </span>
-                      {plan.original_price && (
-                        <span className="text-xl line-through text-muted-foreground">
-                          ৳{plan.original_price}
+                  <CardHeader className="pb-8">
+                    <CardTitle className="text-2xl font-bold">
+                      {plan.name}
+                    </CardTitle>
+                    <div className="mt-4">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                          ৳{plan.price}
                         </span>
+                        {plan.original_price && (
+                          <span className="text-xl line-through text-muted-foreground">
+                            ৳{plan.original_price}
+                          </span>
+                        )}
+                      </div>
+                      {plan.savings && (
+                        <Badge
+                          variant="secondary"
+                          className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                        >
+                          💰 {plan.savings}
+                        </Badge>
                       )}
                     </div>
-                    {plan.savings && (
-                      <Badge
-                        variant="secondary"
-                        className="mt-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                      >
-                        💰 {plan.savings}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="space-y-6">
-                  <ul className="space-y-3">
-                    {plan.features?.map((feature, index) => (
-                      <li key={index} className="flex items-start">
-                        <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
-                          <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
-                        </div>
-                        <span className="text-sm leading-relaxed">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <CardContent className="space-y-6">
+                    <ul className="space-y-3">
+                      {plan.features?.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <div className="p-0.5 bg-green-100 dark:bg-green-900/30 rounded-full mr-3 mt-0.5">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+                          </div>
+                          <span className="text-sm leading-relaxed">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
 
-                  <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Valid for {plan.duration_months}{" "}
-                    {plan.duration_months === 1 ? "month" : "months"}
-                  </div>
-                </CardContent>
+                    <div className="flex items-center text-sm font-medium text-muted-foreground pt-4 border-t">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Valid for {plan.duration_months}{" "}
+                      {plan.duration_months === 1 ? "month" : "months"}
+                    </div>
+                  </CardContent>
 
-                <CardFooter className="pt-6">
-                  <Button
-                    className={`w-full transition-all ${
-                      plan.popular
-                        ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
-                        : ""
-                    }`}
-                    size="lg"
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleSubscribe(plan.plan_id)}
-                    disabled={
-                      payment_loading ||
-                      subscription_status?.has_active_subscription ||
-                      selected_plan === plan.plan_id
-                    }
-                  >
-                    {payment_loading && selected_plan === plan.plan_id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Processing...
-                      </>
-                    ) : subscription_status?.has_active_subscription ? (
-                      "Subscribed"
-                    ) : (
-                      <>
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Subscribe Now
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardFooter className="pt-6">
+                    <Button
+                      className={`w-full transition-all ${
+                        plan.popular
+                          ? "bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl"
+                          : ""
+                      }`}
+                      size="lg"
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => handleSubscribe(plan.plan_id)}
+                      disabled={
+                        payment_loading ||
+                        subscription_status?.has_active_subscription ||
+                        selected_plan === plan.plan_id
+                      }
+                    >
+                      {payment_loading && selected_plan === plan.plan_id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Processing...
+                        </>
+                      ) : subscription_status?.has_active_subscription ? (
+                        "Subscribed"
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Subscribe Now
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-12">
+                <Alert>
+                  <AlertTitle>No Plans Available</AlertTitle>
+                  <AlertDescription>
+                    Subscription plans are currently unavailable. Please try
+                    again later.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -508,17 +548,19 @@ function SubscriptionContent() {
 
 export default function SubscriptionPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <div className="text-center">
-            <Skeleton className="h-12 w-64 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
+    <ErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="text-center">
+              <Skeleton className="h-12 w-64 mx-auto mb-4" />
+              <Skeleton className="h-6 w-96 mx-auto" />
+            </div>
           </div>
-        </div>
-      }
-    >
-      <SubscriptionContent />
-    </Suspense>
+        }
+      >
+        <SubscriptionContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

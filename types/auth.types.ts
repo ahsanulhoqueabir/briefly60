@@ -81,4 +81,5 @@ export interface AuthContextType extends AuthState {
   updateLanguagePreference: (
     language: "bn" | "en",
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
+  updateBookmarks: (articleId: string, action: "add" | "remove") => void;
 }
