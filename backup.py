@@ -14,7 +14,7 @@ TG_THREAD_ID=os.environ["TG_THREAD_ID"]
 
 BASE_DIR = "/tmp/mongo_backup"
 DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-CAPTION_DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+CAPTION_DATE = datetime.datetime.now(datetime.timezone.utc).strftime("%d %b, %Y %H:%M UTC")
 
 EXPORT_DIR = f"{BASE_DIR}/export_{DB_NAME}_{DATE}"
 
@@ -89,7 +89,7 @@ def main():
 
     # 4) send
     print("===  Sending both zips to Telegram ===")
-    send_doc(EXPORT_ZIP, f"{DB_NAME} mongoexport (readable JSON) - {CAPTION_DATE}")
+    send_doc(EXPORT_ZIP, f"{DB_NAME} - {CAPTION_DATE}")
 
     # Optional: report failed exports
     if failed:
