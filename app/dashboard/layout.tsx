@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   FileText,
   Users,
-  FolderTree,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -143,15 +142,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               icon={Users}
               collapsed={!sidebarOpen}
               isActive={pathname.startsWith("/dashboard/users")}
-            />
-          )}
-          {hasPermission("view_categories") && (
-            <NavLink
-              href="/dashboard/categories"
-              label="Categories"
-              icon={FolderTree}
-              collapsed={!sidebarOpen}
-              isActive={pathname.startsWith("/dashboard/categories")}
             />
           )}
         </nav>
