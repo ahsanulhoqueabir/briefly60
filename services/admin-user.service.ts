@@ -32,7 +32,10 @@ export class AdminUserService {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
-      plan: activeSubscription?.plan_snapshot.plan_id || "free",
+      plan: (activeSubscription?.plan_snapshot.plan_id || "free") as
+        | "free"
+        | "pro"
+        | "enterprise",
       image: user.image || undefined,
       rbac: user.rbac,
       preferences: user.preferences

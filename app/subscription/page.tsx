@@ -182,9 +182,10 @@ function SubscriptionContent() {
   const handleSubscribe = async (planId: string) => {
     if (subscription_status?.has_active_subscription) {
       setAlertMessage({
-        type: "info",
-        title: "Active Subscription",
-        message: "You already have an active subscription.",
+        type: "warning",
+        title: "সাবস্ক্রিপশন সক্রিয় আছে",
+        message:
+          "আপনার ইতিমধ্যে একটি সক্রিয় সাবস্ক্রিপশন রয়েছে। বর্তমান সাবস্ক্রিপশন শেষ না হওয়া পর্যন্ত আপনি নতুন সাবস্ক্রিপশন নিতে পারবেন না।",
       });
       return;
     }
@@ -269,11 +270,19 @@ function SubscriptionContent() {
       {subscription_status?.has_active_subscription && (
         <Card className="mb-10 border-2 border-primary bg-linear-to-br from-primary/5 to-purple-500/5 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg mr-3">
-                <Sparkles className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
+            <CardTitle className="flex items-center justify-between text-xl">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg mr-3">
+                  <Sparkles className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
+                </div>
+                Active Subscription
               </div>
-              Active Subscription
+              <Badge
+                variant="secondary"
+                className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+              >
+                ✓ Active
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -321,7 +330,18 @@ function SubscriptionContent() {
             )}
           </CardContent>
           <CardFooter>
-            <div className="w-full">
+            <div className="w-full space-y-3">
+              <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <AlertTitle className="text-blue-700 dark:text-blue-300">
+                  সাবস্ক্রিপশন সক্রিয়
+                </AlertTitle>
+                <AlertDescription className="text-blue-600 dark:text-blue-400">
+                  আপনার ইতিমধ্যে একটি সক্রিয় সাবস্ক্রিপশন রয়েছে। বর্তমান
+                  সাবস্ক্রিপশন শেষ না হওয়া পর্যন্ত আপনি নতুন সাবস্ক্রিপশন নিতে
+                  পারবেন না।
+                </AlertDescription>
+              </Alert>
               <Button
                 className="w-full"
                 variant="outline"
@@ -463,7 +483,7 @@ function SubscriptionContent() {
                           Processing...
                         </>
                       ) : subscription_status?.has_active_subscription ? (
-                        "Subscribed"
+                        "Already Subscribed"
                       ) : (
                         <>
                           <CreditCard className="w-4 h-4 mr-2" />

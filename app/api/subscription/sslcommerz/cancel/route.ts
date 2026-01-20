@@ -28,14 +28,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=cancelled&message=পেমেন্ট বাতিল করা হয়েছে`,
+    const cancelUrl = new URL(
+      "/subscription",
+      process.env.NEXT_PUBLIC_BASE_URL,
     );
+    cancelUrl.searchParams.set("status", "cancelled");
+    cancelUrl.searchParams.set("message", "পেমেন্ট বাতিল করা হয়েছে");
+    return NextResponse.redirect(cancelUrl.toString(), 303);
   } catch (error) {
     console.error("Payment Cancel Handler Error:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=cancelled&message=Payment was cancelled`,
+    const cancelUrl = new URL(
+      "/subscription",
+      process.env.NEXT_PUBLIC_BASE_URL,
     );
+    cancelUrl.searchParams.set("status", "cancelled");
+    cancelUrl.searchParams.set("message", "Payment was cancelled");
+    return NextResponse.redirect(cancelUrl.toString(), 303);
   }
 }
 
@@ -54,7 +62,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=cancelled&message=পেমেন্ট বাতিল করা হয়েছে`,
-  );
+  const cancelUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+  cancelUrl.searchParams.set("status", "cancelled");
+  cancelUrl.searchParams.set("message", "পেমেন্ট বাতিল করা হয়েছে");
+  return NextResponse.redirect(cancelUrl.toString(), 303);
 }

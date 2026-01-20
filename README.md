@@ -187,123 +187,6 @@ briefly60/
     └── import-articles.ts      # Article import
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm/pnpm
-- MongoDB database (local or Atlas)
-- Cloudinary account (for image uploads)
-- SSLCommerz merchant account (for payments)
-
-### Installation
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/yourusername/briefly60.git
-cd briefly60
-```
-
-2. **Install dependencies**
-
-```bash
-npm install
-# or
-pnpm install
-```
-
-3. **Set up environment variables**
-
-Create a `.env.local` file in the root directory:
-
-```env
-# Database
-MONGODB_URI=your_mongodb_connection_string
-
-# JWT
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=7d
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# SSLCommerz
-SSLCOMMERZ_STORE_ID=your_store_id
-SSLCOMMERZ_STORE_PASSWORD=your_store_password
-SSLCOMMERZ_IS_LIVE=false
-
-# App URLs
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
-
-# SEO & PWA (Production)
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
-```
-
-4. **Initialize the database**
-
-```bash
-npm run db:init
-```
-
-5. **Seed subscription plans**
-
-```bash
-npm run db:seed-plans
-```
-
-6. **Import sample articles** (optional)
-
-```bash
-npm run db:import-articles
-```
-
-7. **Run the development server**
-
-```bash
-npm run dev
-```
-
-8. **Open the app**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 📜 Available Scripts
-
-| Script                       | Description                      |
-| ---------------------------- | -------------------------------- |
-| `npm run dev`                | Start development server         |
-| `npm run build`              | Build for production             |
-| `npm start`                  | Start production server          |
-| `npm run lint`               | Run ESLint                       |
-| `npm run db:init`            | Initialize database with indexes |
-| `npm run db:seed-plans`      | Seed subscription plans          |
-| `npm run db:import-articles` | Import articles from data source |
-
-## 🔑 Environment Variables
-
-### Required Variables
-
-| Variable         | Description                | Example                               |
-| ---------------- | -------------------------- | ------------------------------------- |
-| `MONGODB_URI`    | MongoDB connection string  | `mongodb://localhost:27017/briefly60` |
-| `JWT_SECRET`     | Secret key for JWT signing | `your-secret-key`                     |
-| `JWT_EXPIRES_IN` | JWT token expiration       | `7d`                                  |
-
-### Optional Variables
-
-| Variable                    | Description            | Default                 |
-| --------------------------- | ---------------------- | ----------------------- |
-| `CLOUDINARY_CLOUD_NAME`     | Cloudinary cloud name  | -                       |
-| `CLOUDINARY_API_KEY`        | Cloudinary API key     | -                       |
-| `CLOUDINARY_API_SECRET`     | Cloudinary API secret  | -                       |
-| `SSLCOMMERZ_STORE_ID`       | SSLCommerz merchant ID | -                       |
-| `SSLCOMMERZ_STORE_PASSWORD` | SSLCommerz password    | -                       |
-| `SSLCOMMERZ_IS_LIVE`        | Production mode flag   | `false`                 |
-| `NEXT_PUBLIC_APP_URL`       | Application URL        | `http://localhost:3000` |
-
 ## 🎯 Key Functionalities
 
 ### Authentication Flow
@@ -470,20 +353,6 @@ Content-Type: application/json
   - `xl`: 1280px
   - `2xl`: 1536px
 
-## 🧪 Testing Guidelines
-
-### Manual Testing Checklist
-
-- [ ] User registration and login
-- [ ] Article browsing and reading
-- [ ] Bookmark creation and removal
-- [ ] Subscription purchase flow
-- [ ] Profile update with image upload
-- [ ] Quiz completion
-- [ ] Admin panel operations
-- [ ] Theme switching
-- [ ] Mobile responsiveness
-
 ## 📋 Coding Standards
 
 ### File Naming
@@ -538,58 +407,13 @@ Content-Type: application/json
 5. Add authentication/authorization
 6. Document endpoints
 
-## 🚀 Deployment
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-### Deploy to Vercel
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
-```
-
-### Environment Setup
-
-- Set all environment variables in hosting platform
-- Enable production mode for SSLCommerz
-- Configure MongoDB connection string
-- Set proper CORS origins
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Contribution Guidelines
-
-- Follow existing coding standards
-- Write meaningful commit messages
-- Add proper TypeScript types
-- Update documentation
-- Test thoroughly before PR
-
-## 📄 License
-
-This project is private and proprietary.
-
 ## 👥 Authors
 
 - **Development Team** - Briefly60
 
 ## 📞 Support
 
-For support, email support@briefly60.online or open an issue in the repository.
+For support, email contact.ahsanul@gmail.com or open an issue in the repository.
 
 ## 🙏 Acknowledgments
 
@@ -599,5 +423,3 @@ For support, email support@briefly60.online or open an issue in the repository.
 - All contributors and testers
 
 ---
-
-**Built with ❤️ using Next.js, TypeScript, and MongoDB**

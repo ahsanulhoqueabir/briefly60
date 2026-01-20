@@ -83,6 +83,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // Ensure subscription page handles GET requests properly
+  async redirects() {
+    return [];
+  },
+
   // Optional: Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],

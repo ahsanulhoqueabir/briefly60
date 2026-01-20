@@ -39,9 +39,13 @@ export async function POST(req: NextRequest) {
         tran_id,
         "Payment status is not valid",
       );
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=Payment validation failed`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set("message", "Payment validation failed");
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
     // Validate payment with SSLCommerz
@@ -52,9 +56,16 @@ export async function POST(req: NextRequest) {
         tran_id,
         validationResult.error || "Payment validation failed",
       );
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=${encodeURIComponent(validationResult.error || "Payment validation failed")}`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set(
+        "message",
+        validationResult.error || "Payment validation failed",
+      );
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
     // Verify transaction ID matches
@@ -63,9 +74,13 @@ export async function POST(req: NextRequest) {
         tran_id,
         "Transaction ID mismatch",
       );
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=Transaction verification failed`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set("message", "Transaction verification failed");
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
     // Complete subscription
@@ -84,20 +99,30 @@ export async function POST(req: NextRequest) {
     );
 
     if (!subscription) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=Failed to activate subscription`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set("message", "Failed to activate subscription");
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
     // Redirect to success page
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=success&plan=${value_b}`,
+    const redirectUrl = new URL(
+      "/subscription",
+      process.env.NEXT_PUBLIC_BASE_URL,
     );
+    redirectUrl.searchParams.set("status", "success");
+    redirectUrl.searchParams.set("plan", value_b || "");
+
+    return NextResponse.redirect(redirectUrl.toString(), 303);
   } catch (error) {
     console.error("Payment Success Handler Error:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=An error occurred`,
-    );
+    const errorUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+    errorUrl.searchParams.set("status", "failed");
+    errorUrl.searchParams.set("message", "An error occurred");
+    return NextResponse.redirect(errorUrl.toString(), 303);
   }
 }
 
@@ -111,9 +136,10 @@ export async function GET(req: NextRequest) {
   const val_id = searchParams.get("val_id");
 
   if (!val_id || !tran_id) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=Missing payment information`,
-    );
+    const failUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+    failUrl.searchParams.set("status", "failed");
+    failUrl.searchParams.set("message", "Missing payment information");
+    return NextResponse.redirect(failUrl.toString(), 303);
   }
 
   try {
@@ -127,9 +153,16 @@ export async function GET(req: NextRequest) {
         tran_id,
         validationResult.error || "Payment validation failed",
       );
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=${encodeURIComponent(validationResult.error || "Payment validation failed")}`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set(
+        "message",
+        validationResult.error || "Payment validation failed",
+      );
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
     const paymentData = validationResult.data;
@@ -150,18 +183,31 @@ export async function GET(req: NextRequest) {
     );
 
     if (!subscription) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=Failed to activate subscription`,
+      const failUrl = new URL(
+        "/subscription",
+        process.env.NEXT_PUBLIC_BASE_URL,
       );
+      failUrl.searchParams.set("status", "failed");
+      failUrl.searchParams.set("message", "Failed to activate subscription");
+      return NextResponse.redirect(failUrl.toString(), 303);
     }
 
+    const successUrl = new URL(
+      "/subscription",
+      process.env.NEXT_PUBLIC_BASE_URL,
+    );
+    successUrl.searchParams.set("status", "success");
+    successUrl.searchParams.set("plan", paymentData.value_b || "");
+
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=success&plan=${paymentData.value_b}`,
+      successUrl.toString(),
+      303, // 303 See Other - forces GET request
     );
   } catch (error) {
     console.error("Payment Success Handler Error:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=An error occurred`,
-    );
+    const errorUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+    errorUrl.searchParams.set("status", "failed");
+    errorUrl.searchParams.set("message", "An error occurred");
+    return NextResponse.redirect(errorUrl.toString(), 303);
   }
 }
