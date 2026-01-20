@@ -204,7 +204,7 @@ export class EmailService {
     `;
 
     return this.sendEmail({
-      from: smtpConfig.fromEmail || "noreply@briefly60.com",
+      from: smtpConfig.fromEmail || "noreply@briefly60.online",
       to: email,
       subject: "🔐 Reset Your Password - Briefly60",
       html,
@@ -388,7 +388,7 @@ export class EmailService {
                         <td style="padding: 30px 40px; text-align: center; background-color: #f7fafc; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
                             <p style="margin: 0 0 8px; color: #718096; font-size: 14px;">
                                 Need help? Contact us:<br>
-                                <a href="mailto:support@briefly60.com" style="color: #667eea; text-decoration: none;">support@briefly60.com</a>
+                                <a href="mailto:support@briefly60.online" style="color: #667eea; text-decoration: none;">support@briefly60.online</a>
                             </p>
                             <p style="margin: 12px 0 0; color: #a0aec0; font-size: 12px;">
                                 © ${new Date().getFullYear()} Briefly60. All rights reserved.
