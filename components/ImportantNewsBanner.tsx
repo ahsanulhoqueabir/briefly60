@@ -34,43 +34,60 @@ const ImportantNewsBanner: React.FC = () => {
         set_loading(true);
         set_error(null);
 
-        const api_url = typeof window !== 'undefined' 
-          ? `${window.location.origin}/api/articles?type=important&limit=8&status=published`
-          : "/api/articles?type=important&limit=8&status=published";
+        const api_url =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/api/articles?type=important&limit=8&status=published`
+            : "/api/articles?type=important&limit=8&status=published";
 
         const response = await fetch(api_url, {
-          cache: 'no-store',
+          cache: "no-store",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
         if (!response.ok) {
           const error_data = await response.json().catch(() => ({}));
           console.error("Important news API error:", error_data);
-          throw new Error(error_data.message || "Failed to fetch important news");
+          throw new Error(
+            error_data.message || "Failed to fetch important news",
+          );
         }
 
         const data: ImportantNewsResponse = await response.json();
-        
+
         if (!data.success || !data.data || data.data.length === 0) {
-          // Fallback: fetch latest articles
-          const fallback_url = typeof window !== 'undefined'
-            ? `${window.location.origin}/api/articles?limit=8&status=published`
-            : "/api/articles?limit=8&status=published";
-          
+          // Fallback: fetch latest articles with high importance
+          const fallback_url =
+            typeof window !== "undefined"
+              ? `${window.location.origin}/api/articles?limit=8&status=published&importance=high`
+              : "/api/articles?limit=8&status=published&importance=high";
+
           const fallback_response = await fetch(fallback_url, {
-            cache: 'no-store',
+            cache: "no-store",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           });
-          
+
           if (fallback_response.ok) {
             const fallback_data = await fallback_response.json();
             set_important_news(fallback_data.data || []);
           } else {
-            set_important_news([]);
+            // Final fallback: just get latest articles
+            const final_fallback_url =
+              typeof window !== "undefined"
+                ? `${window.location.origin}/api/articles?limit=8&status=published`
+                : "/api/articles?limit=8&status=published";
+            const final_response = await fetch(final_fallback_url, {
+              cache: "no-store",
+            });
+            if (final_response.ok) {
+              const final_data = await final_response.json();
+              set_important_news(final_data.data || []);
+            } else {
+              set_important_news([]);
+            }
           }
         } else {
           set_important_news(data.data);

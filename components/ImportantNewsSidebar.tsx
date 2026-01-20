@@ -39,7 +39,23 @@ const ImportantNewsSidebar: React.FC = () => {
         }
 
         const data: ImportantNewsResponse = await response.json();
-        set_important_news(data.data || []);
+
+        if (!data.success || !data.data || data.data.length === 0) {
+          // Fallback: fetch latest articles
+          const fallback_response = await fetch(
+            "/api/articles?limit=10&status=published",
+            { cache: "no-store" },
+          );
+
+          if (fallback_response.ok) {
+            const fallback_data = await fallback_response.json();
+            set_important_news(fallback_data.data || []);
+          } else {
+            set_important_news([]);
+          }
+        } else {
+          set_important_news(data.data);
+        }
       } catch (err) {
         console.error("Error fetching important news:", err);
         set_error(
