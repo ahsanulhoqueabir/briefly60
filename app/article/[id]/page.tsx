@@ -82,6 +82,12 @@ export default function ArticleDetailPage() {
   }, [article_id]);
 
   const handleBookmark = async () => {
+    // Check subscription first
+    if (!user || !has_premium) {
+      // The SubscriptionRequired wrapper will handle showing the modal
+      return;
+    }
+
     if (is_bookmark_loading || !article) return;
 
     set_is_bookmark_loading(true);
