@@ -141,16 +141,19 @@ export default function FilterModal({
                 </label>
                 <div className="flex gap-2">
                   <Select
-                    value={filters.source_name || ""}
+                    value={filters.source_name || "all"}
                     onValueChange={(value) =>
-                      onFilterChange("source_name", value)
+                      onFilterChange(
+                        "source_name",
+                        value === "all" ? "" : value,
+                      )
                     }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Newspapers" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Newspapers</SelectItem>
+                      <SelectItem value="all">All Newspapers</SelectItem>
                       {NEWS_SOURCES.map((source) => (
                         <SelectItem key={source.value} value={source.value}>
                           {source.label}
@@ -177,14 +180,16 @@ export default function FilterModal({
                 </label>
                 <div className="flex gap-2">
                   <Select
-                    value={filters.category || ""}
-                    onValueChange={(value) => onFilterChange("category", value)}
+                    value={filters.category || "all"}
+                    onValueChange={(value) =>
+                      onFilterChange("category", value === "all" ? "" : value)
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       {CATEGORIES.map((cat) => (
                         <SelectItem key={cat.value} value={cat.value}>
                           {cat.label}
