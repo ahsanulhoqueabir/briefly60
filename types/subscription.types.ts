@@ -1,5 +1,13 @@
 import { PaymentStatus } from "@/models/Subscription.model";
 
+export type SubscriptionPlanId =
+  | "free"
+  | "monthly"
+  | "half_yearly"
+  | "yearly"
+  | "premium"
+  | "pro";
+
 export interface InitPaymentRequest {
   plan_id: string; // monthly, half_yearly, yearly
   user_id: string;

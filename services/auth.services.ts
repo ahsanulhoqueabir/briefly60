@@ -1,6 +1,7 @@
 import { LoginPayload, SignUpPayload } from "@/types/auth.types";
 import { JWTService, TokenUser } from "./jwt.service";
 import { PasswordService } from "@/lib/password";
+import { EmailService } from "./email.service";
 import { validateStrongPassword } from "@/lib/validation";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User.model";
@@ -142,6 +143,14 @@ export class AuthService {
       // Generate JWT token
       const token = JWTService.generateJWTToken(tokenUser);
 
+      // Send welcome email (non-blocking)
+      EmailService.sendWelcomeEmail(newUser.email, newUser.name).catch(
+        (error) => {
+          console.error("Failed to send welcome email:", error);
+          // Don't fail registration if email fails
+        },
+      );
+
       // Return user without password
       const userResponse = newUser.toJSON();
 
@@ -257,15 +266,22 @@ export class AuthService {
       user.reset_password_expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       await user.save();
 
-      // In production, send email with resetToken (not hashedToken)
-      // For now, we'll return the token in response (remove this in production)
-      // Email should contain: ${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${resetToken}
-
-      console.log("Password reset token:", resetToken);
-      console.log(
-        "Reset link:",
-        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/reset-password?token=${resetToken}`,
+      // Send password reset email
+      const emailResult = await EmailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+        user.name,
       );
+
+      if (!emailResult.success) {
+        console.error(
+          "Failed to send password reset email:",
+          emailResult.error,
+        );
+        // Continue anyway - don't expose if user exists
+      }
+
+      console.log("Password reset email sent to:", user.email);
 
       return {
         success: true,

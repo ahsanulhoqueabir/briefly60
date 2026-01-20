@@ -18,6 +18,7 @@ import { useState, useMemo } from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import SoundWave from "@/components/common/SoundWave";
+import { useSubscription } from "@/hooks/use-subscription";
 import SubscriptionRequired from "@/components/subscription/SubscriptionRequired";
 import QuizModal from "@/components/modal/QuizModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,7 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const { user, refreshUser } = useAuth();
+  const { has_premium } = useSubscription();
   const axios = usePrivateAxios();
   const { isBookmarked } = useBookmark(article._id);
   const { handleAsyncError } = useErrorHandler({ context: "ArticleCard" });
@@ -84,6 +86,12 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   });
 
   const handleBookmark = async () => {
+    // Check subscription first
+    if (!user || !has_premium) {
+      // The SubscriptionRequired wrapper will handle showing the modal
+      return;
+    }
+
     if (isBookmarkLoading) return;
 
     setIsBookmarkLoading(true);
@@ -109,6 +117,12 @@ function ArticleCard({ article, id }: ArticleCardProps) {
   };
 
   const handleQuizClick = () => {
+    // Check subscription first
+    if (!user || !has_premium) {
+      // The SubscriptionRequired wrapper will handle showing the modal
+      return;
+    }
+
     setShowQuizModal(true);
   };
 

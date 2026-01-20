@@ -1,7 +1,9 @@
 import Subscription, { ISubscription } from "@/models/Subscription.model";
+import User from "@/models/User.model";
 import { Types } from "mongoose";
 import { UserSubscriptionStatus } from "@/types/subscription.types";
 import { SubscriptionPlanService } from "./subscription-plan.service";
+import { EmailService } from "./email.service";
 import dbConnect from "@/lib/mongodb";
 import { calculateDaysRemaining, calculateEndDate } from "@/lib/utils";
 
@@ -178,6 +180,32 @@ export class SubscriptionService {
       subscription.is_active = true;
 
       await subscription.save();
+
+      // Send subscription confirmation email (non-blocking)
+      try {
+        const user = await User.findById(subscription.user_id);
+        if (user) {
+          EmailService.sendSubscriptionConfirmationEmail(
+            user.email,
+            user.name,
+            subscription.plan_snapshot.name,
+            subscription.plan_snapshot.plan_id,
+            subscription.payment_info.amount_paid,
+            subscription.start_date,
+            subscription.end_date,
+            transaction_id,
+          ).catch((error) => {
+            console.error(
+              "Failed to send subscription confirmation email:",
+              error,
+            );
+            // Don't fail subscription if email fails
+          });
+        }
+      } catch (emailError) {
+        console.error("Error preparing subscription email:", emailError);
+        // Don't fail subscription if email fails
+      }
 
       return subscription;
     } catch (error) {
