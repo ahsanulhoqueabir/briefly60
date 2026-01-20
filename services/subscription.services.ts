@@ -189,7 +189,8 @@ export class SubscriptionService {
             user.email,
             user.name,
             subscription.plan_snapshot.name,
-            subscription.plan_snapshot.plan_id as import("@/types/subscription.types").SubscriptionPlanId,
+            subscription.plan_snapshot
+              .plan_id as import("@/types/subscription.types").SubscriptionPlanId,
             subscription.payment_info.amount_paid,
             subscription.start_date,
             subscription.end_date,
