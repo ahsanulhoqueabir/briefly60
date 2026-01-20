@@ -1,0 +1,65 @@
+name: Database Backup into Telegram
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC (BD 09:00)
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install OS deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip curl tar
+
+      - name: Install MongoDB Database Tools (mongodump, mongoexport)
+        run: |
+          set -euxo pipefail
+
+          UBUNTU_VERSION_ID="$(. /etc/os-release && echo "$VERSION_ID")"
+          if [[ "$UBUNTU_VERSION_ID" == "24.04" ]]; then
+            TOOLS_PLATFORM="ubuntu2404"
+          elif [[ "$UBUNTU_VERSION_ID" == "22.04" ]]; then
+            TOOLS_PLATFORM="ubuntu2204"
+          elif [[ "$UBUNTU_VERSION_ID" == "20.04" ]]; then
+            TOOLS_PLATFORM="ubuntu2004"
+          else
+            echo "Unsupported Ubuntu version: $UBUNTU_VERSION_ID"
+            exit 1
+          fi
+
+          TOOLS_VERSION="100.14.0"
+          URL="https://fastdl.mongodb.org/tools/db/mongodb-database-tools-${TOOLS_PLATFORM}-x86_64-${TOOLS_VERSION}.tgz"
+
+          curl -fsSL "$URL" -o /tmp/mongo-tools.tgz
+          mkdir -p /tmp/mongo-tools
+          tar -xzf /tmp/mongo-tools.tgz -C /tmp/mongo-tools
+          sudo mv /tmp/mongo-tools/mongodb-database-tools-*/bin/* /usr/local/bin/
+
+          mongodump --version
+          mongoexport --version
+
+      - name: Install Python dependencies
+        run: |
+          pip install requests pymongo
+
+      - name: Run backup
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          TG_THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+        run: |
+          python backup.py
