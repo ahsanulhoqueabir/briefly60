@@ -39,5 +39,5 @@ export const smtpConfig = {
   secure: process.env.SMTP_SECURE === "true",
   user: process.env.SMTP_USER!,
   password: process.env.SMTP_PASSWORD!,
-  fromEmail: process.env.SMTP_FROM_EMAIL || "noreply@briefly60.com",
+  fromEmail: process.env.SMTP_FROM_EMAIL || "noreply@briefly60.online",
 };
