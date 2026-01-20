@@ -28,14 +28,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=${encodeURIComponent(error || "পেমেন্ট ব্যর্থ হয়েছে")}`,
-    );
+    const failUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+    failUrl.searchParams.set("status", "failed");
+    failUrl.searchParams.set("message", error || "পেমেন্ট ব্যর্থ হয়েছে");
+    return NextResponse.redirect(failUrl.toString(), 303);
   } catch (error) {
     console.error("Payment Fail Handler Error:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=An error occurred`,
-    );
+    const failUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+    failUrl.searchParams.set("status", "failed");
+    failUrl.searchParams.set("message", "An error occurred");
+    return NextResponse.redirect(failUrl.toString(), 303);
   }
 }
 
@@ -55,7 +57,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?status=failed&message=${encodeURIComponent(error || "পেমেন্ট ব্যর্থ হয়েছে")}`,
-  );
+  const failUrl = new URL("/subscription", process.env.NEXT_PUBLIC_BASE_URL);
+  failUrl.searchParams.set("status", "failed");
+  failUrl.searchParams.set("message", error || "পেমেন্ট ব্যর্থ হয়েছে");
+  return NextResponse.redirect(failUrl.toString(), 303);
 }

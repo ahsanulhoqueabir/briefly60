@@ -35,9 +35,10 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
       return NextResponse.json(
         {
           success: false,
-          error: "আপনার ইতিমধ্যে একটি সক্রিয় সাবস্ক্রিপশন রয়েছে",
+          error:
+            "আপনার ইতিমধ্যে একটি সক্রিয় সাবস্ক্রিপশন রয়েছে। বর্তমান সাবস্ক্রিপশন শেষ না হওয়া পর্যন্ত আপনি নতুন সাবস্ক্রিপশন নিতে পারবেন না।",
         },
-        { status: 400 },
+        { status: 409 }, // 409 Conflict - more appropriate than 400
       );
     }
 
