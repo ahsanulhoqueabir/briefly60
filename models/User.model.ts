@@ -1,6 +1,7 @@
 import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
 export type UserRole = "superadmin" | "admin" | "editor" | "user";
+export type UserStatus = "active" | "inactive" | "banned";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -9,6 +10,7 @@ export interface IUser extends Document {
   name: string;
   image?: string;
   rbac: UserRole;
+  status: UserStatus;
   reset_password_token?: string;
   reset_password_expires?: Date;
   preferences?: {
@@ -52,6 +54,11 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["superadmin", "admin", "editor", "user"],
       default: "user",
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "banned"],
+      default: "active",
     },
     reset_password_token: {
       type: String,

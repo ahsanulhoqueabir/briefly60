@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/User.model";
+import Subscription from "@/models/Subscription.model";
 import {
   AdminUser,
   AdminUserFilters,
@@ -9,20 +10,29 @@ import {
   UserStatus,
   AdminDashboardStats,
 } from "@/types/admin.types";
+import { Types } from "mongoose";
 
 /**
  * Admin service for managing users in MongoDB
  */
 export class AdminUserService {
   /**
-   * Format user for admin response
+   * Format user for admin response with subscription data
    */
-  private static formatUser(user: IUser): AdminUser {
+  private static async formatUser(user: IUser): Promise<AdminUser> {
+    // Get user's active subscription
+    const activeSubscription = await Subscription.findOne({
+      user_id: user._id,
+      is_active: true,
+      end_date: { $gte: new Date() },
+      "payment_info.payment_status": "completed",
+    }).sort({ end_date: -1 });
+
     return {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
-      plan: "free" as const, // Default plan - you might want to add this field to User model
+      plan: activeSubscription?.plan_snapshot.plan_id || "free",
       image: user.image || undefined,
       rbac: user.rbac,
       preferences: user.preferences
@@ -42,7 +52,7 @@ export class AdminUserService {
           }
         : undefined,
       // AdminUser specific fields
-      status: "active" as const, // Default status - you might want to add this field to User model
+      status: user.status || "active",
       role: user.rbac,
       date_created: user.createdAt.toISOString(),
     };
@@ -100,7 +110,10 @@ export class AdminUserService {
       // Get total count
       const totalCount = await User.countDocuments(mongoFilter);
 
-      const formattedUsers = users.map((user) => this.formatUser(user));
+      // Format users with subscription data (async)
+      const formattedUsers = await Promise.all(
+        users.map((user) => this.formatUser(user)),
+      );
 
       return {
         data: formattedUsers,
@@ -148,7 +161,7 @@ export class AdminUserService {
       }
 
       return {
-        data: this.formatUser(user),
+        data: await this.formatUser(user),
         success: true,
       };
     } catch (error) {
@@ -192,7 +205,7 @@ export class AdminUserService {
       }
 
       return {
-        data: this.formatUser(user),
+        data: await this.formatUser(user),
         success: true,
       };
     } catch (error) {
@@ -286,22 +299,14 @@ export class AdminUserService {
     try {
       await dbConnect();
 
-      // Note: Since our User model doesn't have a status field,
-      // we'll use the rbac field for now or you can add a status field to the User model
-      // For now, mapping status to appropriate action
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updateData: any = {};
-
-      if (status === "banned") {
-        // You might want to add a banned field to User model
-        // For now, we'll just update a custom field or handle it differently
-        updateData.rbac = "user"; // demote banned users
-      }
-
-      const user = await User.findByIdAndUpdate(id, updateData, {
-        new: true,
-        runValidators: true,
-      }).exec();
+      const user = await User.findByIdAndUpdate(
+        id,
+        { status },
+        {
+          new: true,
+          runValidators: true,
+        },
+      ).exec();
 
       if (!user) {
         return {
@@ -312,7 +317,7 @@ export class AdminUserService {
       }
 
       return {
-        data: this.formatUser(user),
+        data: await this.formatUser(user),
         success: true,
       };
     } catch (error) {
@@ -404,6 +409,49 @@ export class AdminUserService {
   }
 
   /**
+   * Bulk update user status
+   */
+  static async bulkUpdateStatus(
+    ids: string[],
+    status: UserStatus,
+  ): Promise<BulkActionResult> {
+    const result: BulkActionResult = {
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    await dbConnect();
+
+    for (const id of ids) {
+      try {
+        const user = await User.findByIdAndUpdate(
+          id,
+          { status },
+          { new: true, runValidators: true },
+        ).exec();
+        if (user) {
+          result.success++;
+        } else {
+          result.failed++;
+          result.errors?.push({
+            id,
+            error: "User not found",
+          });
+        }
+      } catch (error) {
+        result.failed++;
+        result.errors?.push({
+          id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Bulk action handler
    */
   static async bulkAction(
@@ -412,6 +460,10 @@ export class AdminUserService {
     switch (payload.action) {
       case "delete":
         return await this.bulkDelete(payload.ids);
+      case "activate":
+        return await this.bulkUpdateStatus(payload.ids, "active");
+      case "ban":
+        return await this.bulkUpdateStatus(payload.ids, "banned");
       case "promote":
         return await this.bulkUpdateRole(payload.ids, "admin");
       case "demote":

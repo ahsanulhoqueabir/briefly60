@@ -29,6 +29,14 @@ export class AuthService {
         };
       }
 
+      // Check if user is banned
+      if (user.status === "banned") {
+        return {
+          success: false,
+          error: "Your account has been banned. Please contact support.",
+        };
+      }
+
       // Verify password
       const isPasswordValid = await PasswordService.comparePassword(
         data.password,
