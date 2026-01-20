@@ -58,7 +58,12 @@ export function useInfiniteArticles(
 
       const params = new URLSearchParams(queryParams);
 
-      const response = await fetch(`/api/articles?${params.toString()}`);
+      const response = await fetch(`/api/articles?${params.toString()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch articles");
@@ -138,7 +143,12 @@ export function useInfiniteArticles(
           queryParams.fields = initialParams.fields.join(",");
 
         const params = new URLSearchParams(queryParams);
-        const response = await fetch(`/api/articles?${params.toString()}`);
+        const response = await fetch(`/api/articles?${params.toString()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch articles");

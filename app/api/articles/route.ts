@@ -2,6 +2,10 @@ import { withEditor } from "@/middleware/verify-auth";
 import { ArticleService } from "@/services/article.service";
 import { NextRequest, NextResponse } from "next/server";
 
+// Force dynamic rendering - no caching for paginated results
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * GET /api/articles - Fetch articles with filtering and pagination
  *
@@ -38,7 +42,15 @@ export async function GET(request: NextRequest) {
     const result = await ArticleService.getArticles(options);
 
     if (result.success) {
-      return NextResponse.json(result, { status: 200 });
+      return NextResponse.json(result, {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
     } else {
       return NextResponse.json(result, { status: 400 });
     }

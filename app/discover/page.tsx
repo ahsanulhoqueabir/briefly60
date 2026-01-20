@@ -105,6 +105,10 @@ export default function DiscoverPage() {
 
         const response = await fetch(`/api/articles/discover?${params}`, {
           signal: abortControllerRef.current.signal,
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
         });
 
         if (!response.ok) {

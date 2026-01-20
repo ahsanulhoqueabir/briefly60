@@ -2,6 +2,10 @@ import { NewsService } from "@/services/news.services";
 import { ArticleQueryParams } from "@/types/news.types";
 import { NextRequest, NextResponse } from "next/server";
 
+// Force dynamic rendering - no caching
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * GET /api/articles/discover - Advanced filtering for discover page
  */
@@ -64,7 +68,15 @@ export async function GET(request: NextRequest) {
 
     const result = await NewsService.getArticles(queryParams);
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(result, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
   } catch (error) {
     console.error("Error in discover API:", error);
 
