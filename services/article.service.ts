@@ -71,11 +71,12 @@ export class ArticleService {
         ];
       }
 
-      // For important news type: filter last 3 days
+      // For important news type: filter last 7 days and importance >= 6
       if (type === "important") {
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        query.published_at = { $gte: threeDaysAgo };
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        query.published_at = { $gte: sevenDaysAgo };
+        query.importance = { $gte: 6 }; // Only articles with importance 6 or higher
       }
 
       // Get articles with appropriate sorting

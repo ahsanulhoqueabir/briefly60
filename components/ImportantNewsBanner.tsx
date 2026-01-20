@@ -34,16 +34,47 @@ const ImportantNewsBanner: React.FC = () => {
         set_loading(true);
         set_error(null);
 
-        const response = await fetch(
-          "/api/articles?type=important&limit=8&status=published",
-        );
+        const api_url = typeof window !== 'undefined' 
+          ? `${window.location.origin}/api/articles?type=important&limit=8&status=published`
+          : "/api/articles?type=important&limit=8&status=published";
+
+        const response = await fetch(api_url, {
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch important news");
+          const error_data = await response.json().catch(() => ({}));
+          console.error("Important news API error:", error_data);
+          throw new Error(error_data.message || "Failed to fetch important news");
         }
 
         const data: ImportantNewsResponse = await response.json();
-        set_important_news(data.data || []);
+        
+        if (!data.success || !data.data || data.data.length === 0) {
+          // Fallback: fetch latest articles
+          const fallback_url = typeof window !== 'undefined'
+            ? `${window.location.origin}/api/articles?limit=8&status=published`
+            : "/api/articles?limit=8&status=published";
+          
+          const fallback_response = await fetch(fallback_url, {
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (fallback_response.ok) {
+            const fallback_data = await fallback_response.json();
+            set_important_news(fallback_data.data || []);
+          } else {
+            set_important_news([]);
+          }
+        } else {
+          set_important_news(data.data);
+        }
       } catch (err) {
         console.error("Error fetching important news:", err);
         set_error(

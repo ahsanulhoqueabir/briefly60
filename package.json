@@ -9,7 +9,9 @@
     "lint": "eslint",
     "db:init": "tsx scripts/init-db.ts",
     "db:import-articles": "tsx scripts/import-articles.ts",
-    "db:seed-plans": "tsx scripts/seed-subscription-plans.ts"
+    "db:seed-plans": "tsx scripts/seed-subscription-plans.ts",
+    "check-important": "tsx scripts/check-important-articles.ts",
+    "update-important": "tsx scripts/update-important-articles.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
