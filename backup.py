@@ -14,11 +14,10 @@ TG_THREAD_ID=os.environ["TG_THREAD_ID"]
 
 BASE_DIR = "/tmp/mongo_backup"
 DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+CAPTION_DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-DUMP_DIR = f"{BASE_DIR}/dump_{DB_NAME}_{DATE}"
 EXPORT_DIR = f"{BASE_DIR}/export_{DB_NAME}_{DATE}"
 
-DUMP_ZIP = f"{BASE_DIR}/{DB_NAME}_mongodump_{DATE}.zip"
 EXPORT_ZIP = f"{BASE_DIR}/{DB_NAME}_mongoexport_{DATE}.zip"
 
 def run(cmd: list[str]) -> None:
@@ -56,12 +55,8 @@ def main():
     os.makedirs(BASE_DIR, exist_ok=True)
     os.makedirs(EXPORT_DIR, exist_ok=True)
 
-    # 1) mongodump (restore-ready)
-    print("=== 1) mongodump (BSON restore backup) ===")
-    run(["mongodump", "--uri", MONGO_URI, "--db", DB_NAME, "--out", DUMP_DIR])
-
-    # 2) mongoexport (readable JSON)  ✅ no --gzip
-    print("=== 2) mongoexport (Readable JSON) ===")
+     #  mongoexport (readable JSON)  ✅ no --gzip
+    print("===  mongoexport (Readable JSON) ===")
     client = MongoClient(MONGO_URI)
     db = client[DB_NAME]
     collections = db.list_collection_names()
@@ -89,14 +84,12 @@ def main():
             print(f"⚠️ mongoexport failed for '{col}'. continuing...")
 
     # 3) zip
-    print("=== 3) Zipping outputs ===")
-    zip_dir(DUMP_DIR, DUMP_ZIP)
+    print("===  Zipping outputs ===")
     zip_dir(EXPORT_DIR, EXPORT_ZIP)
 
     # 4) send
-    print("=== 4) Sending both zips to Telegram ===")
-    send_doc(DUMP_ZIP, f"{DB_NAME} mongodump (restore-ready) - {DATE}")
-    send_doc(EXPORT_ZIP, f"{DB_NAME} mongoexport (readable JSON) - {DATE}")
+    print("===  Sending both zips to Telegram ===")
+    send_doc(EXPORT_ZIP, f"{DB_NAME} mongoexport (readable JSON) - {CAPTION_DATE}")
 
     # Optional: report failed exports
     if failed:
@@ -104,10 +97,9 @@ def main():
         requests.post(url, data={"chat_id": CHAT_ID,"message_thread_id": TG_THREAD_ID, "text": "⚠️ mongoexport failed: " + ", ".join(failed)}, timeout=60)
 
     # 5) cleanup
-    print("=== 5) Cleanup ===")
-    shutil.rmtree(DUMP_DIR, ignore_errors=True)
+    print("===  Cleanup ===")
     shutil.rmtree(EXPORT_DIR, ignore_errors=True)
-    for p in [DUMP_ZIP, EXPORT_ZIP]:
+    for p in [EXPORT_ZIP]:
         try:
             os.remove(p)
         except FileNotFoundError:
