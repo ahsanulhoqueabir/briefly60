@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserIcon, Mail, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ProfileEditForm } from "@/components/ProfileEditForm";
+import { ProfileEditForm } from "@/components/common/ProfileEditForm";
 
 const ProfilePage: React.FC = () => {
   const { user, loading, refreshUser } = useAuth();

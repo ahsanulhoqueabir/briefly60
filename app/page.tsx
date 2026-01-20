@@ -1,14 +1,15 @@
 "use client";
 
-import ArticleCard from "@/components/ArticleCard";
-import ImportantNewsBanner from "@/components/ImportantNewsBanner";
-import ImportantNewsSidebar from "@/components/ImportantNewsSidebar";
-import RefreshIndicator from "@/components/RefreshIndicator";
-import { useArticles } from "@/contexts/ArticlesContext";
+import ArticleCard from "@/components/article/ArticleCard";
+import ImportantNewsBanner from "@/components/article/ImportantNewsBanner";
+import ImportantNewsSidebar from "@/components/article/ImportantNewsSidebar";
+import RefreshIndicator from "@/components/common/RefreshIndicator";
+import { useInfiniteArticles } from "@/hooks/useInfiniteArticles";
 import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
-  const { articles, loading, error } = useArticles();
+  const { articles, loading, error, hasMore, observerRef } =
+    useInfiniteArticles();
 
   return (
     <main className="bg-background">
@@ -54,6 +55,25 @@ export default function HomePage() {
                 <p className="text-muted-foreground">
                   কোনো সংবাদ পাওয়া যায়নি
                 </p>
+              </div>
+            )}
+
+            {/* Infinite Scroll Trigger */}
+            {articles.length > 0 && (
+              <div ref={observerRef} className="py-8">
+                {loading && (
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span className="ml-2 text-muted-foreground text-sm">
+                      আরো সংবাদ লোড হচ্ছে...
+                    </span>
+                  </div>
+                )}
+                {!hasMore && !loading && (
+                  <div className="text-center text-muted-foreground text-sm">
+                    সব সংবাদ দেখানো হয়েছে
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/footer";
-import PWAInstallPrompt from "@/components/pwa-install-prompt";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/footer";
+import PWAInstallPrompt from "@/components/common/pwa-install-prompt";
 
 export default function LayoutWrapper({
   children,

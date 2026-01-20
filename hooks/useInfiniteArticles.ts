@@ -16,21 +16,31 @@ export function useInfiniteArticles(
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef(false);
+  const pageRef = useRef(1); // Track current page immediately
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || loadingRef.current) return;
+    if (loading || !hasMore || loadingRef.current) {
+      console.log("Load more blocked:", {
+        loading,
+        hasMore,
+        loadingRef: loadingRef.current,
+      });
+      return;
+    }
 
     loadingRef.current = true;
     setLoading(true);
     setError(null);
 
+    const currentPage = pageRef.current;
+    console.log("Fetching page:", currentPage);
+
     try {
       const queryParams: Record<string, string> = {
-        page: page.toString(),
+        page: currentPage.toString(),
         limit: "20",
       };
 
@@ -71,36 +81,61 @@ export function useInfiniteArticles(
 
       const data = await response.json();
 
-      if (data.articles && data.articles.length > 0) {
+      console.log("LoadMore response:", {
+        page: currentPage,
+        articlesCount: data.data?.length,
+        pagination: data.pagination,
+        fullResponse: data,
+      });
+
+      if (data.data && data.data.length > 0) {
+        console.log(
+          `Received ${data.data.length} articles for page ${currentPage}`,
+        );
         setArticles((prev) => {
           // Create a Set of existing IDs for efficient lookup
           const existingIds = new Set(prev.map((article) => article._id));
           // Filter out duplicates
-          const newArticles = data.articles.filter(
+          const newArticles = data.data.filter(
             (article: Article) => !existingIds.has(article._id),
+          );
+          console.log(
+            `Adding ${newArticles.length} new articles (${data.data.length - newArticles.length} duplicates filtered)`,
           );
           return [...prev, ...newArticles];
         });
-        setPage((prev) => prev + 1);
+
+        // Increment page ref immediately
+        pageRef.current = currentPage + 1;
+
         setHasMore(data.pagination.current_page < data.pagination.total_pages);
+        console.log("Next page will be:", pageRef.current);
+        console.log("LoadMore pagination details:", {
+          current_page: data.pagination.current_page,
+          total_pages: data.pagination.total_pages,
+          hasMore: data.pagination.current_page < data.pagination.total_pages,
+        });
       } else {
+        console.log("No more articles available");
         setHasMore(false);
       }
     } catch (err) {
+      console.error("Load more error:", err);
       setError(err instanceof Error ? err.message : "Failed to load articles");
       setHasMore(false);
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [loading, hasMore, page, initialParams]);
+  }, [loading, hasMore, initialParams]);
 
   // Reset state when params change and load data
   const paramsKey = JSON.stringify(initialParams);
   useEffect(() => {
+    console.log("Resetting state for new params");
     // Reset state
     setArticles([]);
-    setPage(1);
+    pageRef.current = 1;
     setHasMore(true);
     setError(null);
     loadingRef.current = false;
@@ -156,12 +191,25 @@ export function useInfiniteArticles(
 
         const data = await response.json();
 
-        if (data.articles && data.articles.length > 0) {
-          setArticles(data.articles);
-          setPage(2);
+        console.log("Initial load response:", {
+          articlesCount: data.data?.length,
+          pagination: data.pagination,
+          fullData: data,
+        });
+
+        if (data.data && data.data.length > 0) {
+          console.log(`Initial load: ${data.data.length} articles`);
+          setArticles(data.data);
+          pageRef.current = 2;
           setHasMore(
             data.pagination.current_page < data.pagination.total_pages,
           );
+          console.log("Initial page set to 2, next fetch will be page 2");
+          console.log("Pagination details:", {
+            current_page: data.pagination.current_page,
+            total_pages: data.pagination.total_pages,
+            hasMore: data.pagination.current_page < data.pagination.total_pages,
+          });
         } else {
           setArticles([]);
           setHasMore(false);
@@ -184,11 +232,22 @@ export function useInfiniteArticles(
   // Intersection Observer callback
   const observerRef = useCallback(
     (node: HTMLElement | null) => {
+      console.log("Observer callback called:", {
+        node: !!node,
+        loading,
+        hasMore,
+      });
       if (loading) return;
       if (observer.current) observer.current.disconnect();
 
       observer.current = new IntersectionObserver((entries) => {
+        console.log("Observer entries:", {
+          isIntersecting: entries[0].isIntersecting,
+          hasMore,
+          loading,
+        });
         if (entries[0].isIntersecting && hasMore) {
+          console.log("Triggering loadMore from observer");
           loadMore();
         }
       });

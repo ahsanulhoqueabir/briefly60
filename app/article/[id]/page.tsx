@@ -20,7 +20,7 @@ import { useBookmark } from "@/hooks/useBookmark";
 import usePrivateAxios from "@/hooks/use-private-axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/use-subscription";
-import SubscriptionRequired from "@/components/SubscriptionRequired";
+import SubscriptionRequired from "@/components/subscription/SubscriptionRequired";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

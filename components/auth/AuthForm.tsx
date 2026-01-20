@@ -15,8 +15,8 @@ import {
   SignUpFormData,
   calculatePasswordStrength,
 } from "@/lib/validation";
-import ForgotPasswordModal from "@/components/ForgotPasswordModal";
-import ResetPasswordModal from "@/components/ResetPasswordModal";
+import ForgotPasswordModal from "@/components/modal/ForgotPasswordModal";
+import ResetPasswordModal from "@/components/modal/ResetPasswordModal";
 import { useTurnstile } from "@/hooks/use-turnstile";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { toast } from "sonner";

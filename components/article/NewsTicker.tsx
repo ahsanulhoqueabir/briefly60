@@ -1,7 +1,10 @@
 "use client";
 
 import { Article } from "@/types/news.types";
-import { SlidingLogoMarquee, SlidingLogoMarqueeItem } from "./ui/scroll-title";
+import {
+  SlidingLogoMarquee,
+  SlidingLogoMarqueeItem,
+} from "@/components/ui/scroll-title";
 
 interface NewsTickerProps {
   articles: Article[];
