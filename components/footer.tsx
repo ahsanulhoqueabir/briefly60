@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import Logo from "./Logo";
+import { useCacheClear } from "@/hooks/use-cache-clear";
 
 export default function Footer() {
+  const { clear_cache, is_clearing } = useCacheClear();
+
   return (
     <footer className="bg-card border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -88,6 +94,16 @@ export default function Footer() {
                 >
                   Terms of Service
                 </Link>
+              </li>
+              <li>
+                <button
+                  onClick={clear_cache}
+                  disabled={is_clearing}
+                  className="hover:text-primary transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <Trash2 className="size-3" />
+                  {is_clearing ? "Clearing..." : "Clear Cache"}
+                </button>
               </li>
             </ul>
           </div>

@@ -13,6 +13,8 @@ import {
   Moon,
   Sun,
   Monitor,
+  Trash2,
+  HardDrive,
 } from "lucide-react";
 import { NEWS_CATEGORIES } from "@/lib/constants";
 import { UserPreferences } from "@/types";
@@ -21,10 +23,12 @@ import SettingSection from "@/components/SettingSection";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useCacheClear } from "@/hooks/use-cache-clear";
 
 const SettingsPage = () => {
   const { theme, setTheme } = useTheme();
   const { user, updateLanguagePreference } = useAuth();
+  const { clear_cache, is_clearing } = useCacheClear();
   const [preferences, setPreferences] = useState<UserPreferences>({
     preferred_categories: ["politics", "technology"],
     language: "en",
@@ -478,6 +482,42 @@ const SettingsPage = () => {
                 </Link>
               </div>
             </div>
+
+            {/* System & Storage */}
+            <SettingSection
+              id="system"
+              title="System & Storage"
+              description="Manage app data and cache"
+              icon={HardDrive}
+              isActive={activeSection === "system"}
+              onToggle={setActiveSection}
+            >
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Clear App Cache
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Clear cached data including service workers, local storage,
+                    and browser cache. This helps resolve issues with outdated
+                    content and ensures you see the latest updates.
+                  </p>
+                  <button
+                    onClick={clear_cache}
+                    disabled={is_clearing}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 border-2 border-destructive/50 text-destructive rounded-lg font-medium hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                    )}
+                  >
+                    <Trash2 className="size-4" />
+                    {is_clearing ? "Clearing Cache..." : "Clear Cache & Reload"}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    ⚠️ This will clear all cached data and reload the page
+                  </p>
+                </div>
+              </div>
+            </SettingSection>
           </SettingSection>
         </div>
 

@@ -36,27 +36,30 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
-  // Load from localStorage
-  const loadFromCache = useCallback(() => {
-    try {
-      const cached = localStorage.getItem(STORAGE_KEY);
-      if (cached) {
-        const parsedData = JSON.parse(cached);
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          setArticles(parsedData);
-          return true;
+  // Load from localStorage on mount
+  useEffect(() => {
+    const loadFromCache = () => {
+      try {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          const parsedData = JSON.parse(cached);
+          if (Array.isArray(parsedData) && parsedData.length > 0) {
+            setArticles(parsedData);
+            return true;
+          }
         }
+      } catch (err) {
+        console.error("Failed to load from cache:", err);
       }
-    } catch (err) {
-      console.error("Failed to load from cache:", err);
-    }
-    return false;
+      return false;
+    };
+
+    loadFromCache();
   }, []);
 
   // Save to localStorage
   const saveToCache = useCallback((data: Article[]) => {
     try {
-      // Keep minimum 20 articles in cache
       const articlesToCache = data.slice(
         0,
         Math.max(MIN_CACHED_ARTICLES, data.length),
@@ -68,7 +71,7 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Fetch articles from API
+  // Fetch articles from API (always fetches page 1 for cache/refresh)
   const fetchArticles = useCallback(
     async (silent = false) => {
       if (!isMountedRef.current) return;
@@ -82,51 +85,38 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       try {
-        const response = await fetch("/api/articles?page=1&limit=30");
+        const response = await fetch(`/api/articles?page=1&limit=20`);
 
         if (!response.ok) {
-          // If no cache and first time, don't show error, just show empty state
-          if (articles.length === 0) {
-            throw new Error(
-              "সংবাদ লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।",
-            );
-          }
-          return; // Keep existing articles
+          throw new Error(
+            "সংবাদ লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।",
+          );
         }
 
         const result = await response.json();
 
         // Handle different response formats
+        let articlesData: Article[] = [];
+
         if (result.success === true && Array.isArray(result.data)) {
-          // New format: { success: true, data: [...] }
-          if (isMountedRef.current) {
-            setArticles(result.data);
-            saveToCache(result.data);
-          }
+          articlesData = result.data;
         } else if (Array.isArray(result.data)) {
-          // Format: { data: [...] }
-          if (isMountedRef.current) {
-            setArticles(result.data);
-            saveToCache(result.data);
-          }
+          articlesData = result.data;
         } else if (Array.isArray(result)) {
-          // Direct array format
-          if (isMountedRef.current) {
-            setArticles(result);
-            saveToCache(result);
-          }
+          articlesData = result;
         } else {
-          // Invalid format - but don't crash on first visit
           console.error("Unexpected response format:", result);
-          if (articles.length === 0) {
-            // First time visit with invalid response, show empty state instead of error
-            setArticles([]);
+        }
+
+        if (isMountedRef.current && articlesData.length > 0) {
+          setArticles(articlesData);
+          if (!silent) {
+            saveToCache(articlesData);
           }
         }
       } catch (err) {
         console.error("Fetch articles error:", err);
         if (isMountedRef.current && articles.length === 0) {
-          // Only show error if no cached articles to display
           setError(
             err instanceof Error ? err.message : "সংবাদ লোড করতে সমস্যা হয়েছে",
           );
@@ -138,7 +128,7 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
         }
       }
     },
-    [saveToCache],
+    [saveToCache, articles.length],
   );
 
   // Manual refresh function
@@ -146,32 +136,14 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
     await fetchArticles(false);
   }, [fetchArticles]);
 
-  // Initial load
+  // Initial fetch and background polling
   useEffect(() => {
     isMountedRef.current = true;
 
-    // Try to load from cache first for instant display
-    const hasCachedData = loadFromCache();
+    // Initial fetch
+    fetchArticles(false);
 
-    if (hasCachedData) {
-      // Show cached data immediately
-      setLoading(false);
-
-      // Then fetch fresh data in background
-      fetchArticles(true);
-    } else {
-      // No cache, show loading and fetch
-      fetchArticles(false);
-    }
-
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, [loadFromCache, fetchArticles]);
-
-  // Setup background polling
-  useEffect(() => {
-    // Clear existing interval
+    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -185,6 +157,7 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
 
     // Cleanup
     return () => {
+      isMountedRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -200,7 +173,6 @@ export function ArticlesProvider({ children }: { children: React.ReactNode }) {
 
         if (lastFetch) {
           const timeSinceLastFetch = now - parseInt(lastFetch, 10);
-          // If more than 60 seconds since last fetch, refresh
           if (timeSinceLastFetch > CACHE_DURATION) {
             fetchArticles(true);
           }

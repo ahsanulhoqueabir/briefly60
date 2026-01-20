@@ -13,16 +13,19 @@ import {
   LogOut,
   Settings,
   CreditCard,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useCacheClear } from "@/hooks/use-cache-clear";
 
 const MobileBottomNav: React.FC = () => {
   const { isAuthenticated, user, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { clear_cache, is_clearing } = useCacheClear();
 
   const handleLogout = async () => {
     try {
@@ -161,7 +164,7 @@ const MobileBottomNav: React.FC = () => {
           {/* Bottom Sheet with slide-up animation */}
           <div className="fixed bottom-0 left-0 right-0 h-[50vh] bg-background border-t border-border rounded-t-3xl shadow-2xl z-50 md:hidden overflow-hidden animate-in slide-in-from-bottom duration-300">
             {/* User Info */}
-            <div className="px-6 py-5 border-b border-border bg-gradient-to-r from-muted/30 to-muted/10">
+            <div className="px-6 py-5 border-b border-border bg-linear-to-r from-muted/30 to-muted/10">
               <p className="text-base font-semibold truncate">{user?.name}</p>
               <p className="text-sm text-muted-foreground truncate mt-1">
                 {user?.email}
@@ -201,8 +204,20 @@ const MobileBottomNav: React.FC = () => {
                 <span className="text-sm font-medium">Subscription</span>
               </Link>
             </div>
-
-            {/* Logout Button */}
+System Actions */}
+            <div className="border-t border-border py-2">
+              <button
+                onClick={clear_cache}
+                disabled={is_clearing}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-accent active:bg-accent/80 transition-colors w-full text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Trash2 className="size-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium">
+                  {is_clearing ? "Clearing..." : "Clear Cache"}
+                </span>
+              </button
             <div className="border-t border-border py-2">
               <button
                 onClick={handleLogout}

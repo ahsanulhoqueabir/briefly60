@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Settings,
   Menu,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
@@ -28,6 +29,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useCacheClear } from "@/hooks/use-cache-clear";
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, signOut } = useAuth();
@@ -35,6 +37,7 @@ const Navbar: React.FC = () => {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { clear_cache, is_clearing } = useCacheClear();
 
   const handleLogout = async () => {
     try {
@@ -223,6 +226,17 @@ const Navbar: React.FC = () => {
                         <CreditCard className="size-4" />
                         Subscription
                       </Link>
+                      <button
+                        onClick={() => {
+                          clear_cache();
+                          setIsDropdownOpen(false);
+                        }}
+                        disabled={is_clearing}
+                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-accent transition-colors w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="size-4" />
+                        {is_clearing ? "Clearing..." : "Clear Cache"}
+                      </button>
                     </div>
 
                     <div className="border-t border-border py-1">
@@ -394,6 +408,19 @@ const Navbar: React.FC = () => {
                     <span className="text-sm font-medium">Settings</span>
                   </Link>
                   <button
+                    onClick={() => {
+                      clear_cache();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    disabled={is_clearing}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-border hover:border-primary/50 hover:bg-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="size-8" strokeWidth={2} />
+                    <span className="text-sm font-medium">
+                      {is_clearing ? "Clearing..." : "Clear Cache"}
+                    </span>
+                  </button>
+                  <button
                     onClick={handleLogout}
                     className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-destructive/50 text-destructive hover:bg-destructive/10 transition-all col-span-2"
                   >
@@ -407,14 +434,29 @@ const Navbar: React.FC = () => {
                 <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                   Account
                 </SheetTitle>
-                <Link
-                  href="/auth/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-3 p-6 rounded-2xl bg-primary text-primary-foreground shadow-md transition-all hover:shadow-lg"
-                >
-                  <LogIn className="size-6" />
-                  <span className="text-base font-semibold">Login</span>
-                </Link>
+                <div className="space-y-3">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-3 p-6 rounded-2xl bg-primary text-primary-foreground shadow-md transition-all hover:shadow-lg"
+                  >
+                    <LogIn className="size-6" />
+                    <span className="text-base font-semibold">Login</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      clear_cache();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    disabled={is_clearing}
+                    className="flex items-center justify-center gap-3 p-4 rounded-2xl border-2 border-border hover:border-primary/50 hover:bg-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                  >
+                    <Trash2 className="size-5" />
+                    <span className="text-sm font-medium">
+                      {is_clearing ? "Clearing..." : "Clear Cache"}
+                    </span>
+                  </button>
+                </div>
               </>
             )}
           </div>
