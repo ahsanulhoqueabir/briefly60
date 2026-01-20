@@ -41,7 +41,7 @@ export default function ArticleDetailPage() {
   const [is_submitting, set_is_submitting] = useState(false);
   const [error_message, set_error_message] = useState<string>("");
 
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateBookmarks } = useAuth();
   const axios = usePrivateAxios();
   const { isBookmarked } = useBookmark(article_id);
   const { has_premium } = useSubscription();
@@ -91,16 +91,26 @@ export default function ArticleDetailPage() {
     if (is_bookmark_loading || !article) return;
 
     set_is_bookmark_loading(true);
+
+    // Optimistic update - immediately show bookmark change
+    const action = isBookmarked ? "remove" : "add";
+    updateBookmarks(article._id, action);
+
     try {
       const response = await axios.post("/api/bookmark", {
         news: article._id,
       });
 
-      if (response.data.success) {
-        await refreshUser();
+      if (!response.data.success) {
+        // Rollback on failure
+        const rollbackAction = action === "add" ? "remove" : "add";
+        updateBookmarks(article._id, rollbackAction);
       }
     } catch (error) {
       console.error("Error handling bookmark:", error);
+      // Rollback optimistic update on error
+      const rollbackAction = action === "add" ? "remove" : "add";
+      updateBookmarks(article._id, rollbackAction);
     } finally {
       set_is_bookmark_loading(false);
     }
