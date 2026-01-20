@@ -88,20 +88,8 @@ export const metadata: Metadata = {
     },
   },
 
-  // Viewport and mobile optimization
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
-
   // PWA and mobile
   manifest: "/site.webmanifest",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -151,6 +139,18 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
     "format-detection": "telephone=no",
   },
+};
+
+// Viewport configuration (separate from metadata)
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
