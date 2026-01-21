@@ -3,9 +3,11 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { generateInvoicePDF } from "@/lib/invoice";
-import { useSubscription, useSubscriptionInit } from "@/hooks/use-subscription";
+import { useSubscription } from "@/hooks/use-subscription";
+import { useEasyCheckout } from "@/hooks/use-easy-checkout";
 import { SubscriptionPlan } from "@/types/subscription-plan.types";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { EasyCheckoutModal } from "@/components/subscription/easy-checkout-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,12 +41,14 @@ function SubscriptionContent() {
     refetch,
   } = useSubscription();
   const {
-    initializePayment,
+    initializeEasyCheckout,
     is_loading: payment_loading,
     error: payment_error,
-  } = useSubscriptionInit();
+  } = useEasyCheckout();
 
   const [selected_plan, setSelectedPlan] = useState<string | null>(null);
+  const [selected_plan_details, setSelectedPlanDetails] =
+    useState<SubscriptionPlan | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [plans_loading, setPlansLoading] = useState(true);
   const [auto_renew, setAutoRenew] = useState(false);
@@ -54,6 +58,10 @@ function SubscriptionContent() {
     message: string;
   } | null>(null);
   const [params_processed, setParamsProcessed] = useState(false);
+
+  // Easy Checkout state
+  const [easy_checkout_open, setEasyCheckoutOpen] = useState(false);
+  const [session_key, setSessionKey] = useState<string | null>(null);
 
   // Process URL params in useEffect to avoid SSR hydration issues
   useEffect(() => {
@@ -191,16 +199,66 @@ function SubscriptionContent() {
     }
 
     setSelectedPlan(planId);
-    const result = await initializePayment(planId, auto_renew);
 
-    if (!result.success) {
+    // Find plan details
+    const plan = plans.find((p) => p.plan_id === planId);
+    if (plan) {
+      setSelectedPlanDetails(plan);
+    }
+
+    // Initialize Easy Checkout
+    const result = await initializeEasyCheckout(planId, auto_renew);
+
+    if (result.success && result.session_key) {
+      // Open Easy Checkout modal
+      setSessionKey(result.session_key);
+      setEasyCheckoutOpen(true);
+    } else {
       setAlertMessage({
         type: "error",
         title: "Failed to Initialize Payment",
         message: result.error || "Please try again.",
       });
       setSelectedPlan(null);
+      setSelectedPlanDetails(null);
     }
+  };
+
+  const handlePaymentSuccess = (payment_data: any) => {
+    console.log("Payment successful:", payment_data);
+    setEasyCheckoutOpen(false);
+    setSessionKey(null);
+    setSelectedPlan(null);
+    setSelectedPlanDetails(null);
+
+    // Show success message
+    setAlertMessage({
+      type: "success",
+      title: "Payment Successful!",
+      message:
+        "Your payment has been processed. Please wait while we activate your subscription.",
+    });
+
+    // Refetch subscription status after a short delay
+    setTimeout(() => {
+      refetch();
+    }, 2000);
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error("Payment error:", error);
+    setAlertMessage({
+      type: "error",
+      title: "Payment Failed",
+      message: error || "Payment could not be completed. Please try again.",
+    });
+  };
+
+  const handleCloseCheckout = () => {
+    setEasyCheckoutOpen(false);
+    setSessionKey(null);
+    setSelectedPlan(null);
+    setSelectedPlanDetails(null);
   };
 
   if (status_loading || plans_loading) {
@@ -562,6 +620,17 @@ function SubscriptionContent() {
           </Card>
         </div>
       )}
+
+      {/* Easy Checkout Modal */}
+      <EasyCheckoutModal
+        is_open={easy_checkout_open}
+        session_key={session_key}
+        plan_name={selected_plan_details?.name || "Subscription"}
+        amount={selected_plan_details?.price || 0}
+        onClose={handleCloseCheckout}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
     </div>
   );
 }

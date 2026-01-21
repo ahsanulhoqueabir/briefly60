@@ -44,7 +44,7 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
 
     // Parse request body
     const body = await req.json();
-    const { plan_id, auto_renew = false } = body;
+    const { plan_id, auto_renew = false, use_easy_checkout = false } = body;
 
     if (!plan_id) {
       return NextResponse.json(
@@ -109,7 +109,10 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
     });
 
     // Initialize payment with SSLCommerz
-    const paymentResult = await sslcommerzService.initPayment(paymentData);
+    const paymentResult = await sslcommerzService.initPayment(
+      paymentData,
+      use_easy_checkout,
+    );
 
     if (!paymentResult.success) {
       // Mark subscription as failed
@@ -127,11 +130,23 @@ export const POST = withUser(async (req: NextRequest, auth_user) => {
       );
     }
 
+    // For Easy Checkout, return session_key without gateway_url
+    if (use_easy_checkout && paymentResult.session_key) {
+      return NextResponse.json({
+        success: true,
+        session_key: paymentResult.session_key,
+        transaction_id: transaction_id,
+        use_easy_checkout: true,
+      });
+    }
+
+    // For traditional redirect, return gateway_url
     return NextResponse.json({
       success: true,
       gateway_url: paymentResult.gateway_url,
       transaction_id: transaction_id,
       session_key: paymentResult.session_key,
+      use_easy_checkout: false,
     });
   } catch (error) {
     console.error("Subscription Init Error:", error);

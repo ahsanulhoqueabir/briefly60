@@ -12,6 +12,7 @@ export interface InitPaymentRequest {
   plan_id: string; // monthly, half_yearly, yearly
   user_id: string;
   auto_renew?: boolean;
+  use_easy_checkout?: boolean; // Use embedded Easy Checkout instead of redirect
 }
 
 export interface InitPaymentResponse {
@@ -20,6 +21,7 @@ export interface InitPaymentResponse {
   transaction_id?: string;
   session_key?: string;
   error?: string;
+  use_easy_checkout?: boolean; // Indicates if Easy Checkout should be used
 }
 
 export interface PaymentValidationResponse {

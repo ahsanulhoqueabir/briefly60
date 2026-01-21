@@ -61,8 +61,13 @@ export class SSLCommerzService {
 
   /**
    * Initialize payment session with SSLCommerz
+   * @param paymentData Payment initialization data
+   * @param useEasyCheckout If true, returns session_key for Easy Checkout. If false, returns gateway_url for redirect
    */
-  async initPayment(paymentData: SSLCommerzPaymentData): Promise<{
+  async initPayment(
+    paymentData: SSLCommerzPaymentData,
+    useEasyCheckout: boolean = false,
+  ): Promise<{
     success: boolean;
     gateway_url?: string;
     session_key?: string;
@@ -114,6 +119,30 @@ export class SSLCommerzService {
             : "Failed to connect to payment gateway",
       };
     }
+  }
+
+  /**
+   * Initialize Easy Checkout (Embedded Payment)
+   * Returns session_key for client-side Easy Checkout integration
+   */
+  async initEasyCheckout(paymentData: SSLCommerzPaymentData): Promise<{
+    success: boolean;
+    session_key?: string;
+    error?: string;
+  }> {
+    const result = await this.initPayment(paymentData, true);
+
+    if (result.success && result.session_key) {
+      return {
+        success: true,
+        session_key: result.session_key,
+      };
+    }
+
+    return {
+      success: false,
+      error: result.error || "Failed to initialize Easy Checkout",
+    };
   }
 
   /**
