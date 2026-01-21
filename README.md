@@ -2,7 +2,20 @@
 
 A modern, full-stack news aggregation and reading platform built with Next.js 16, MongoDB, and TypeScript. Briefly60 provides users with curated news articles, personalized reading experiences, bookmarking capabilities, subscription management, and interactive quizzes.
 
-## 🚀 Features
+## � Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Implementation Details](#-implementation-details)
+- [Security Features](#-security-features)
+- [Design System](#-design-system)
+- [Development Guidelines](#-development-guidelines)
+- [API Documentation](#-api-documentation)
+- [Getting Started](#-getting-started)
+- [Scripts](#-scripts)
+
+## �🚀 Features
 
 ### 🔐 Authentication & Authorization
 
@@ -90,6 +103,8 @@ A modern, full-stack news aggregation and reading platform built with Next.js 16
 - **Form Handling**: React Hook Form + Zod validation
 - **Charts**: Recharts
 - **Date Handling**: date-fns
+- **State Management**: React Context API + Zustand
+- **HTTP Client**: Axios with interceptors
 
 ### Backend
 
@@ -100,7 +115,9 @@ A modern, full-stack news aggregation and reading platform built with Next.js 16
 - **Password Hashing**: bcryptjs
 - **Image Upload**: Cloudinary
 - **Payment Gateway**: SSLCommerz
-- **PDF Generation**: jsPDF
+- **Email Service**: Nodemailer
+- **PDF Generation**: jsPDF + jspdf-autotable
+- **Security**: Cloudflare Turnstile (CAPTCHA)
 
 ### Development Tools
 
@@ -187,6 +204,289 @@ briefly60/
     └── import-articles.ts      # Article import
 ```
 
+## 🎯 Implementation Details
+
+### Authentication System
+
+**Implementation:**
+
+- JWT-based authentication with secure token management
+- Tokens stored in HTTP-only cookies for security
+- Middleware-based route protection using `withAuth` HOC
+- Password reset with time-limited tokens (1 hour expiration)
+- Email verification for password reset requests
+
+**Key Files:**
+
+- `middleware/verify-auth.ts` - JWT verification middleware
+- `services/auth.services.ts` - Authentication business logic
+- `app/api/auth/` - Auth API endpoints
+- `contexts/AuthContext.tsx` - Client-side auth state management
+
+### Role-Based Access Control (RBAC)
+
+**Implementation:**
+
+- 4 hierarchical user roles: superadmin > admin > editor > user
+- Fine-grained permissions defined in `lib/role-permissions.ts`
+- Middleware validation using `withRolePermission` HOC
+- Permission checks at both API and UI levels
+- Dynamic UI rendering based on user permissions
+
+**Permissions Structure:**
+
+```typescript
+{
+  user: {
+    canCreate: ['bookmark', 'quiz_attempt'],
+    canRead: ['articles', 'own_profile', 'own_subscription'],
+    canUpdate: ['own_profile', 'own_settings'],
+    canDelete: ['own_bookmark']
+  },
+  editor: {
+    // Inherits user permissions + article management
+  },
+  admin: {
+    // Inherits editor permissions + user management
+  },
+  superadmin: {
+    // Full system access
+  }
+}
+```
+
+### Subscription Management
+
+**Implementation:**
+
+- Integration with SSLCommerz payment gateway
+- Support for multiple payment methods (cards, mobile banking, internet banking)
+- Subscription plans with versioning system (prevents price shock)
+- Auto-renewal with manual toggle option
+- Invoice generation with PDF download
+- Payment webhook handling for IPN notifications
+- Transaction status tracking (pending, completed, failed, cancelled)
+
+**Key Features:**
+
+- Price protection: Existing subscribers keep their plan price
+- Plan upgrade/downgrade with prorated refunds
+- Subscription history with detailed transaction logs
+- Admin panel for plan management and versioning
+
+**Files:**
+
+- `services/sslcommerz.services.ts` - Payment processing
+- `services/subscription.services.ts` - Subscription logic
+- `models/Subscription.model.ts` - Subscription schema with status tracking
+- `app/api/subscription/` - Subscription API endpoints
+- `lib/invoice.ts` - PDF invoice generation
+
+### Article Management System
+
+**Implementation:**
+
+- Rich article schema with metadata (views, reads, engagement)
+- Category-based organization (Politics, Sports, Technology, Business, etc.)
+- Featured articles system with priority sorting
+- Article discovery with filtering and pagination
+- Trending articles based on view count and recency
+- Full-text search across title, description, and content
+- Article analytics tracking (views, read count, engagement time)
+
+**Key Features:**
+
+- Lazy loading with infinite scroll
+- Category-specific article feeds
+- Article bookmarking with user collections
+- Reading progress tracking
+- Social sharing capabilities
+
+**Files:**
+
+- `models/Article.model.ts` - Article schema with analytics
+- `services/article.service.ts` - Article business logic
+- `hooks/useInfiniteArticles.ts` - Infinite scroll implementation
+- `components/article/` - Article UI components
+
+### Quiz System
+
+**Implementation:**
+
+- Article-based quizzes with multiple-choice questions
+- Automatic quiz generation linked to articles
+- Score calculation and performance tracking
+- Leaderboard system with rankings
+- Quiz history with detailed analytics
+- Time tracking for quiz attempts
+
+**Key Features:**
+
+- 4-5 questions per article
+- Immediate feedback on answers
+- Personal best tracking
+- Quiz statistics (accuracy, average time, total attempts)
+- Article-specific leaderboards
+
+**Files:**
+
+- `models/Quiz.model.ts` - Quiz schema
+- `services/quiz.services.ts` - Quiz logic and scoring
+- `app/api/quiz/` - Quiz API endpoints
+- `components/article/QuizModal.tsx` - Quiz UI
+
+### Bookmark System
+
+**Implementation:**
+
+- User-specific article bookmarking
+- Quick save/unsave functionality
+- Bookmark collection management
+- Bookmark synchronization across devices
+
+**Files:**
+
+- `models/Bookmark.model.ts` - Bookmark schema
+- `services/bookmark.services.ts` - Bookmark operations
+- `hooks/useBookmark.ts` - Client-side bookmark management
+
+### Profile Management
+
+**Implementation:**
+
+- User profile with avatar upload to Cloudinary
+- Profile image optimization and transformation
+- User statistics (articles read, quizzes taken, bookmarks saved)
+- Language preference (English/Bangla)
+- Theme preference (Light/Dark/System)
+- Reading preferences and notifications settings
+
+**Files:**
+
+- `models/User.model.ts` - User schema with profile fields
+- `services/profile.services.ts` - Profile operations
+- `hooks/use-profile.ts` - Profile state management
+- `app/api/profile/route.ts` - Profile API endpoint
+
+### Admin Dashboard
+
+**Implementation:**
+
+- Comprehensive analytics dashboard with Recharts
+- User management (CRUD operations, role assignment, bulk actions)
+- Article management (create, edit, publish, delete, bulk operations)
+- Subscription plan management with versioning
+- Real-time statistics (active users, revenue, engagement metrics)
+- Category management
+
+**Key Features:**
+
+- Bulk operations for efficiency
+- Data visualization with charts
+- Search and filter capabilities
+- Export functionality for reports
+- Audit logs for admin actions
+
+**Files:**
+
+- `app/dashboard/` - Admin dashboard pages
+- `components/admin/` - Admin UI components
+- `app/api/dashboard/` - Admin API endpoints
+
+### Progressive Web App (PWA)
+
+**Implementation:**
+
+- Service Worker for offline functionality
+- App manifest for install prompts
+- Cache-first strategy for articles
+- Background sync for bookmarks
+- Push notifications support
+- Offline fallback page
+
+**Files:**
+
+- `public/sw.js` - Service Worker
+- `public/site.webmanifest` - App manifest
+- `app/offline/page.tsx` - Offline fallback
+
+### Email System
+
+**Implementation:**
+
+- Nodemailer integration for transactional emails
+- Email templates for various scenarios:
+  - Welcome email on registration
+  - Password reset instructions
+  - Subscription confirmation
+  - Payment receipts
+  - Newsletter (optional)
+
+**Files:**
+
+- `services/email.services.ts` - Email sending logic
+- `scripts/test-email.ts` - Email testing utility
+
+### SEO & Performance Optimization
+
+**Implementation:**
+
+- Server-Side Rendering (SSR) for critical pages
+- Static Site Generation (SSG) for public pages
+- Dynamic sitemap generation
+- Robots.txt configuration
+- Open Graph and Twitter Card meta tags
+- JSON-LD structured data for articles
+- Image optimization with Next.js Image component
+- Code splitting and lazy loading
+- Font optimization with next/font
+
+**Files:**
+
+- `app/sitemap.ts` - Dynamic sitemap generator
+- `app/robots.ts` - Robots.txt configuration
+- `lib/seo.ts` - SEO utility functions
+
+### Error Handling
+
+**Implementation:**
+
+- Global error boundary with user-friendly messages
+- API error standardization
+- Error context for state management
+- Custom error pages (404, 500, global error)
+- Error logging and monitoring
+
+**Files:**
+
+- `contexts/ErrorContext.tsx` - Error state management
+- `hooks/use-error-handler.ts` - Error handling hook
+- `app/error.tsx` - Error page
+- `app/global-error.tsx` - Global error boundary
+- `app/not-found.tsx` - 404 page
+
+### Security Implementation
+
+**Features:**
+
+- JWT token validation on all protected routes
+- HTTP-only cookies for token storage
+- CSRF protection
+- Input validation with Zod schemas
+- MongoDB injection prevention
+- XSS protection via sanitization
+- Rate limiting on authentication endpoints
+- Cloudflare Turnstile for bot protection
+- Secure password reset with time-limited tokens
+- Environment variable protection
+
+**Files:**
+
+- `middleware/verify-auth.ts` - Auth middleware
+- `middleware/role-permission.ts` - RBAC middleware
+- `lib/validation.ts` - Input validation schemas
+- `hooks/use-turnstile.ts` - CAPTCHA integration
+
 ## 🎯 Key Functionalities
 
 ### Authentication Flow
@@ -233,6 +533,101 @@ briefly60/
 - **CORS Configuration** for API security
 - **Rate Limiting** on sensitive endpoints
 - **Secure Password Reset** with time-limited tokens
+
+## 📱 API Documentation
+
+For detailed API documentation including all endpoints, request/response formats, authentication requirements, and examples, please refer to [API-Documentation.md](./API-Documentation.md).
+
+### Quick Links
+
+- [Authentication APIs](./API-Documentation.md#authentication-apis)
+- [Article APIs](./API-Documentation.md#article-apis)
+- [Profile APIs](./API-Documentation.md#profile-apis)
+- [Subscription APIs](./API-Documentation.md#subscription-apis)
+- [Quiz APIs](./API-Documentation.md#quiz-apis)
+- [Bookmark APIs](./API-Documentation.md#bookmark-apis)
+- [Admin APIs](./API-Documentation.md#admin-apis)
+- [Dashboard Analytics APIs](./API-Documentation.md#dashboard-analytics-apis)
+
+## 🔧 Environment Variables
+
+| Variable                            | Description                  | Required           |
+| ----------------------------------- | ---------------------------- | ------------------ |
+| `MONGODB_URI`                       | MongoDB connection string    | Yes                |
+| `JWT_SECRET`                        | Secret key for JWT signing   | Yes                |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name        | Yes                |
+| `CLOUDINARY_API_KEY`                | Cloudinary API key           | Yes                |
+| `CLOUDINARY_API_SECRET`             | Cloudinary API secret        | Yes                |
+| `SSLCOMMERZ_STORE_ID`               | SSLCommerz store ID          | Yes (for payments) |
+| `SSLCOMMERZ_STORE_PASSWORD`         | SSLCommerz store password    | Yes (for payments) |
+| `SSLCOMMERZ_IS_LIVE`                | SSLCommerz mode (true/false) | Yes (for payments) |
+| `EMAIL_HOST`                        | SMTP host                    | Yes (for emails)   |
+| `EMAIL_PORT`                        | SMTP port                    | Yes (for emails)   |
+| `EMAIL_USER`                        | SMTP user                    | Yes (for emails)   |
+| `EMAIL_PASSWORD`                    | SMTP password                | Yes (for emails)   |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`    | Turnstile site key           | No                 |
+| `TURNSTILE_SECRET_KEY`              | Turnstile secret key         | No                 |
+| `NEXT_PUBLIC_BASE_URL`              | Application base URL         | Yes                |
+
+## 🏢 Project Structure Details
+
+### `/app` Directory
+
+- Uses Next.js 16 App Router
+- File-based routing system
+- API routes in `/app/api`
+- Page routes with layouts
+- Server and client components
+
+### `/components` Directory
+
+- Reusable UI components
+- Feature-specific component folders
+- shadcn/ui components in `/ui`
+- Admin components in `/admin`
+
+### `/contexts` Directory
+
+- React Context providers
+- Global state management
+- Auth, Theme, Error contexts
+
+### `/hooks` Directory
+
+- Custom React hooks
+- Reusable logic extraction
+- API integration hooks
+
+### `/lib` Directory
+
+- Utility functions
+- Constants and configurations
+- Database connections
+- Helper functions
+
+### `/models` Directory
+
+- Mongoose schemas
+- Database models
+- Type definitions
+
+### `/services` Directory
+
+- Business logic layer
+- Separated from API routes
+- Reusable service functions
+
+### `/types` Directory
+
+- TypeScript type definitions
+- Interface declarations
+- Type exports
+
+### `/middleware` Directory
+
+- API middleware functions
+- Authentication checks
+- Authorization validators
 
 ## 📱 API Documentation
 
@@ -407,19 +802,26 @@ Content-Type: application/json
 5. Add authentication/authorization
 6. Document endpoints
 
-## 👥 Authors
+## 👥 Contributors
 
-- **Development Team** - Briefly60
+- **Ahsanul Haque** - Lead Developer
 
 ## 📞 Support
 
 For support, email contact.ahsanul@gmail.com or open an issue in the repository.
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
 
 ## 🙏 Acknowledgments
 
 - Next.js team for the amazing framework
 - shadcn/ui for beautiful components
 - MongoDB team for the robust database
+- Vercel for hosting platform
+- SSLCommerz for payment gateway
+- Cloudinary for image management
 - All contributors and testers
 
 ---

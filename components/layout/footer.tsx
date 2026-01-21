@@ -34,22 +34,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/trending"
-                  className="hover:text-primary transition-colors"
-                >
-                  Trending
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="hover:text-primary transition-colors"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/about"
                   className="hover:text-primary transition-colors"
                 >
@@ -109,7 +93,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground font-inter">
-          <p>&copy; 2025 Briefly60. All rights reserved.</p>
+          <p>&copy; 2026 Briefly60. All rights reserved.</p>
         </div>
       </div>
     </footer>
