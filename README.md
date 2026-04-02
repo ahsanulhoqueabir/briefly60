@@ -1,4 +1,4 @@
-# 📰 Briefly60 - News Aggregation Platform
+# 📰 Briefly60 - News Aggregation Platform 
 
 A modern, full-stack news aggregation and reading platform built with Next.js 16, MongoDB, and TypeScript. Briefly60 provides users with curated news articles, personalized reading experiences, bookmarking capabilities, subscription management, and interactive quizzes.
 
